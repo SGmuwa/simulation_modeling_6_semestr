@@ -10,6 +10,7 @@ namespace agents
     {
         static void Main(string[] args)
         {
+            new Game1().Run();
         }
     }
 }
