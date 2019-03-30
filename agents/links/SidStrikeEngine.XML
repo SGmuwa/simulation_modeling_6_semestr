@@ -1,0 +1,1230 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SidStrikeEngine</name>
+    </assembly>
+    <members>
+        <member name="T:SidStrikeEngine.Game">
+            <summary>
+            Класс, на котором базируются игры на движке SidStrikeEngine.
+            В нём описаны процессы, когда нужно рисовать, думать, обрабатывать клавишу и так далее...
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.AudioConteiner">
+            <summary>
+            Представляет собой контейнер для хранения музыки.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.AudioConteiner.data">
+            <summary>
+            Перечисление нот, которые будут играть.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.AudioConteiner.played">
+            <summary>
+            Используется для PlayMusic и StopMusic. Когда played становится равным false, то PlayAudio останавливает вопсроизведение.
+            Запуск PlayAudio принуждает played = true
+            Запуск StopMusic принуждает played = false
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.AudioConteiner.AudioComplitedEventHandler">
+            <summary>
+            Представляет метод, обрабатывающий событие SidStrikeEngine.Game.AudioConteiner.
+            </summary>
+            <param name="sender">Источник события</param>
+            <param name="e"></param>
+        </member>
+        <member name="E:SidStrikeEngine.Game.AudioConteiner.AudioComplited">
+            <summary>
+            Возникает при завершении воспроизведение всех нот, которые были в списке.
+            Возникает в отдельном потоке.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.PlayAudio(System.Boolean)">
+            <summary>
+            Воспроизводит следующую ноту.
+            </summary>
+            <param name="loop">True - аудио начнёт воспроизводить музыку заного после завершения списка нот. False - завершить.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.StopAudio">
+            <summary>
+            Останавливает воспроизведение музыки.
+            А именно: перестаёт отправлять поток нотов/звуков в консоль.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.#ctor(System.Int32[],System.Boolean)">
+            <summary>
+            Создаёт экземпляр аудио-контейнера.
+            </summary>
+            <param name="data">Данные, которые представляют собой ноты.</param>
+            <param name="IgnoreDiv">Игнорирование не чётности данных.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.#ctor(System.Int32[])">
+            <summary>
+            Создаёт экземпляр аудио-контейнера.
+            </summary>
+            <param name="data">Данные, которые представляют собой ноты.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.#ctor(System.String,System.Char[],System.Boolean)">
+            <summary>
+            Создаёт экземпляр аудио-контейнера.
+            </summary>
+            <param name="data">Данные, которые представляют собой ноты.</param>
+            <param name="IgnoreDiv">Игнорирование не чётности данных.</param>
+            <param name="separator">Список разделителей между цифр. По-умолчанию следующий:
+            { ' ', '\n', '\t', '\r', ',', ';', '.', '/', '\\', '?', '*', '(', ')' }</param>
+        </member>
+        <member name="T:SidStrikeEngine.Game.AudioConteiner.AudioArgs">
+            <summary>
+            Структура хранит данные для воспроизведения одной ноты.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.AudioArgs.ToArray(System.Int32[],System.Boolean)">
+            <summary>
+            Переводит массив цифр в набор нот.
+            </summary>
+            <param name="data">Данные нот в цифрах. Формат: частота, длина.</param>
+            <param name="IgnoreDiv">Игнорирование не чётности данных.</param>
+            <returns>Массив с нотами.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.AudioArgs.ToArray(System.String,System.Char[],System.Boolean)">
+            <summary>
+            Переводит текст в аргументы для аудиоконсоли.
+            </summary>
+            <param name="AudArgs">Аргументы для аудиоконсоли в текстовом виде.</param>
+            <param name="IgnoreDiv">Игнорирование не чётности данных.</param>
+            <param name="separator">Список разделителей между цифр. По-умолчанию следующий:
+            { ' ', '\n', '\t', '\r', ',', ';', '.', '/', '\\', '?', '*', '(', ')' }</param>
+            <returns>Массив с нотами.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.AudioConteiner.AudioArgs.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Создаёт экземпляр для ноты.
+            </summary>
+            <param name="hz">Высота/частота ноты/звука.</param>
+            <param name="lang">Долгота, продолжительность ноты.</param>
+        </member>
+        <member name="P:SidStrikeEngine.Game.AudioConteiner.AudioArgs.lang">
+            <summary>
+            Долгота.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.AudioConteiner.AudioArgs.hz">
+            <summary>
+            Частота.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.AudioConteiner.AudioArgs.Enabled">
+            <summary>
+            Отвечает на вопрос: стоит ли проигрывать ноту.
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.AudioConteiner.AudioArgs.AudioFlag">
+            <summary>
+            Тип, который даёт различия для нот:
+            Нота может быть проиграна, если записана верно
+            Нота может быть пустой, просто пауза
+            Нота может быть пропущена, если длина звука меньше или равна 0.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.AudioConteiner.AudioArgs.AudioFlag.Play">
+            <summary>
+            Говорит, что звук должен проигрываться.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.AudioConteiner.AudioArgs.AudioFlag.Pause">
+            <summary>
+            Говорит, что нота должна проигрываться без звука.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.AudioConteiner.AudioArgs.AudioFlag.Drop">
+            <summary>
+            Говорит, что нота должна быть пропущена.
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.AudioConteiner.AudioComplitedEventArgs">
+            <summary>
+            Реализует хранение дополнительных сведеньев об завершнеии проигрывании аудио.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.AudioConteiner.AudioComplitedEventArgs.Empty">
+            <summary>
+            Содержит значение аргумента события с без данных события. 
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.ActionGoDraw">
+            <summary>
+            Инкапсулирует метод, который предназначен для рисования картинки.
+            </summary>
+            <param name="TimeOldDraw">Интервал времени, за который был отрисован кадр.</param>
+            <param name="GState">Графическое состояние системы.</param>
+        </member>
+        <member name="T:SidStrikeEngine.Game.ActionGoTick">
+            <summary>
+            Инкапсулирует метод, который предназначен для обработки логических событий в игре.
+            </summary>
+            <param name="TimeOldTick">Интервал времени, за который игровая логика была закончена.</param>
+        </member>
+        <member name="T:SidStrikeEngine.Game.ActionIsKeyPress">
+            <summary>
+            Инкапсулирует метод, который предназначен для обработки нажатий клавишь.
+            </summary>
+            <param name="KeyPress">Кнопка, которая была нажата в ходе игры.</param>
+        </member>
+        <member name="E:SidStrikeEngine.Game.IsStart">
+            <summary>
+            Вызывается при старте движка
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.Game.GoDraw">
+            <summary>
+            Событие, когда надо нарисовать что-то на экране
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.Game.GoTick">
+            <summary>
+            Событие, когда надо продумать логику.
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.Game.IsKeyPress">
+            <summary>
+            Событие, когда пользователь нажал на кнопку.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.LetsDraw">
+            <summary>
+            Поток, который содержит метод, организовывающий рисование
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.GraphicTick">
+            <summary>
+            Метод организовывает рисование объектов
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.#ctor">
+            <summary>
+            Создаёт экземпляр с рекомендуемыми параметрами.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Run">
+            <summary>
+            Данный метод запускает игру.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Run(System.Boolean)">
+            <summary>
+            Данный метод запускает игру.
+            </summary>
+            <param name="CursorShow">True, чтобы не скрывать курсор.</param>
+        </member>
+        <member name="F:SidStrikeEngine.Game.GState">
+            <summary>
+            Графическое состояние системы
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.GraphicState">
+            <summary>
+            Графическое состояние движка.
+            Здесь описано местоположение изображения, размер, хранятся изображения до/во время рисования.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.GraphicState.#ctor(SidStrikeEngine.Point)">
+            <summary>
+            Создаёт экземпляр графического состояния движка.
+            </summary>
+            <param name="Size">Разрешение изображения в символах.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.GraphicState.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Создаёт экземпляр графического состояния движка.
+            </summary>
+            <param name="SizeX">Ширина разрешения изображения в символах.</param>
+            <param name="SizeY">Высота разрешения изображения в символах.</param>
+        </member>
+        <member name="P:SidStrikeEngine.Game.GraphicState.position">
+            <summary>
+            Позиция начала отрисовки в консоли
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.GraphicState.Size">
+            <summary>
+            Размер изображения
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.GraphicState.UpdateFullScreen">
+            <summary>
+            Данный метод изменит разрешение экрана, если это требуется.
+            Обновляет поле IsFullScreen.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.GraphicState.NeedFullScreen">
+            <summary>
+            Отвечает на вопрос, должно ли изображение растягиваться на весь экран.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.GraphicState.IsFullScreen">
+            <summary>
+            Является ли данное изображение полноэкранным?
+            Данное свойство обновляется с помощью метода UpdateFullScreen для оптимизации.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.GraphicState.NewScreen">
+            <summary>
+            Используется для отрисовки нового изображения.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.GraphicState.OldScreen">
+            <summary>
+            Последнее завершённое изображение.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.GraphicState.camera">
+            <summary>
+            Координата, с которой нужно отрисовывать экран.
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.Game.Screen">
+            <summary>
+            Класс описывает работу с изображением.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.Screen.Data">
+            <summary>
+            Данные на экране.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.Screen.FullScreen">
+            <summary>
+            Влияет на размер данных.
+            True - все символы печатаются.
+            False - все символы, кроме последнего.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Game.Screen.Size">
+            <summary>
+            Размеры настоящего массива.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Transform(SidStrikeEngine.Point,SidStrikeEngine.Point,System.Boolean)">
+            <summary>
+            Изменяет текущее разрешение экрана.
+            </summary>
+            <param name="newSize">Размер нового разрешения экрана.</param>
+            <param name="Offset">Смещение старой картинки.</param>
+            <param name="FullScreen"> True - все символы печатаются.
+            False - все символы, кроме последнего.</param>
+            <returns>True, если картинка потеряла символы.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.#ctor(System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Создаёт массив данных о символах на экране.
+            </summary>
+            <param name="SizeX">Устанавливает ширину массива.</param>
+            <param name="SizeY">Устанавливает высоту (длину) массива.</param>
+            <param name="FullScreen"> True - все символы печатаются.
+            False - все символы, кроме последнего.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.#ctor(SidStrikeEngine.Point,System.Boolean)">
+            <summary>
+            Создаёт массив данных о символах на экране.
+            </summary>
+            <param name="Size">Устанавливает размеры массива.</param>
+            <param name="FullScreen"> True - все символы печатаются.
+            False - все символы, кроме последнего.</param>
+        </member>
+        <member name="P:SidStrikeEngine.Game.Screen.Item(System.Int32)">
+            <summary>
+            Управление содержимым массива.
+            </summary>
+            <param name="index">Индекс элемента.</param>
+            <returns>Символизирует информацию о том, как символ должен быть напечатан.</returns>
+        </member>
+        <member name="P:SidStrikeEngine.Game.Screen.Item(System.Int32,System.Int32)">
+            <summary>
+            Управление содержимым массива.
+            </summary>
+            <param name="IndexX">Индекс вложеного массива.</param>
+            <param name="IndexY">Индекс глабального массива.</param>
+            <returns>Символизирует информацию о том, как символ должен быть напечатан.</returns>
+        </member>
+        <member name="P:SidStrikeEngine.Game.Screen.Item(SidStrikeEngine.Point)">
+            <summary>
+            Управление содержимым массива.
+            </summary>
+            <param name="index">Индекс как двумерного массива.</param>
+            <returns>Символизирует информацию о том, как символ должен быть напечатан.</returns>
+        </member>
+        <member name="P:SidStrikeEngine.Game.Screen.Length">
+            <summary>
+            Количество элементов в массиве
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Char(System.Int32)">
+            <summary>
+            Получает символ по индексу в массиве
+            </summary>
+            <param name="index">Запрашиваемый индекс</param>
+            <returns>Символ, учавствующий в данной картинке</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Char(SidStrikeEngine.Point)">
+            <summary>
+            Получает символ по индексу в массиве
+            </summary>
+            <param name="index">Двумерный индекс</param>
+            <returns>Символ, учавствующий в данной картинке</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Char(System.Int32,System.Int32)">
+            <summary>
+            Получает символ по индекску в массиве
+            </summary>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <returns>Символ, учавствующий в данной картинке</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.GetArrayChar(System.Int32,System.Int32)">
+            <summary>
+            Получает неполную копию элементов экрана 
+            </summary>
+            <param name="StartIndex">Начальное положение</param>
+            <param name="count">Количество символов</param>
+            <returns>Массив символов из экрана</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Char(System.Int32,System.Char)">
+            <summary>
+            Заменяет значение символа в массие
+            </summary>
+            <param name="index">Индекс символа</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Char(SidStrikeEngine.Point,System.Char)">
+            <summary>
+            Заменяет значение символа по индексу в массиве
+            </summary>
+            <param name="index">Двумерный индекс символа</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.Char(System.Int32,System.Int32,System.Char)">
+            <summary>
+            Заменяет значение символа по индексу в массиве
+            </summary>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ForegroundColor(System.Int32)">
+            <summary>
+            Получает цвет символа по индексу
+            </summary>
+            <param name="index">Индекс символа</param>
+            <returns>Цвет этого символа</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ForegroundColor(SidStrikeEngine.Point)">
+            <summary>
+            Получает цвет символа по двумерному индексу
+            </summary>
+            <param name="index">Двумерный индекс символа</param>
+            <returns>Цвет этого символа</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ForegroundColor(System.Int32,System.Int32)">
+            <summary>
+            Получает цвет символа по двумерному индексу
+            </summary>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <returns>Цвет этого символа</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ForegroundColor(System.Int32,System.ConsoleColor)">
+            <summary>
+            Заменяет цвет символа по индексу
+            </summary>
+            <param name="index">Индекс символа</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ForegroundColor(SidStrikeEngine.Point,System.ConsoleColor)">
+            <summary>
+            Заменяет цвет символа по индексу
+            </summary>
+            <param name="index">Двумерный индекс символа</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ForegroundColor(System.Int32,System.Int32,System.ConsoleColor)">
+            <summary>
+            Заменяет цвет символа по индексу
+            </summary>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.BackgroundColor(System.Int32)">
+            <summary>
+            Получает цвет фона символа по индексу
+            </summary>
+            <param name="index">Индекс символа</param>
+            <returns>Цвет фона этого символа</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.BackgroundColor(SidStrikeEngine.Point)">
+            <summary>
+            Получает цвет фона символа по двумерному индексу
+            </summary>
+            <param name="index">Двумерный индекс символа</param>
+            <returns>Цвет фона этого символа</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.BackgroundColor(System.Int32,System.Int32)">
+            <summary>
+            Получает цвет фона символа по двумерному индексу
+            </summary>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <returns>Цвет этого символа</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.BackgroundColor(System.Int32,System.ConsoleColor)">
+            <summary>
+            Заменяет цвет символа по индексу
+            </summary>
+            <param name="index">Индекс символа</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.BackgroundColor(SidStrikeEngine.Point,System.ConsoleColor)">
+            <summary>
+            Заменяет цвет фона символа по индексу
+            </summary>
+            <param name="index">Двумерный индекс символа</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.BackgroundColor(System.Int32,System.Int32,System.ConsoleColor)">
+            <summary>
+            Заменяет цвет фона символа по индексу
+            </summary>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <param name="value">Требуемое значение</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ToDefault(System.Char,System.ConsoleColor,System.ConsoleColor)">
+            <summary>
+            Установить все значения данных по-умолчанию.
+            </summary>
+            <param name="Pixel">Устанавлевает все значения символа.</param>
+            <param name="ForegroundColor">Устанавливает все значения верхнего цвета.</param>
+            <param name="BackgroundColor">Устанавливает все значения заднего цвета.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.ToDefault(SidStrikeEngine.Game.ScreenPixel)">
+            <summary>
+            Установить все значения данных по умолчанию
+            </summary>
+            <param name="value">Устанавлевает все значения символа</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.OneToTwoDimensional(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Получает из двухмерных координат одномерный индекс в массиве
+            </summary>
+            <param name="Size">Размеры массива</param>
+            <param name="index">Индекс двумерного массива</param>
+            <returns>Индекс для одномерного массива</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.OneToTwoDimensional(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Получает из двухмерных координат одномерный индекс в массиве
+            </summary>
+            <param name="SizeX">Размеры вложенного массива</param>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <returns>Индекс для одномерного массива</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Screen.OneToTwoDimensional(SidStrikeEngine.Point,System.Int32,System.Int32)">
+            <summary>
+            Получает из двухмерных координат одномерный индекс в массиве
+            </summary>
+            <param name="Size">Размеры массива</param>
+            <param name="IndexX">Индекс вложеного массива</param>
+            <param name="IndexY">Индекс глабального массива</param>
+            <returns>Индекс для одномерного массива</returns>
+        </member>
+        <member name="T:SidStrikeEngine.Game.ScreenPixel">
+            <summary>
+            Структура, которая содержит данные о символе на экране
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.ScreenPixel.Pixel">
+            <summary>
+            Символ символизирует пиксель на экране
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.ScreenPixel.ForegroundColor">
+            <summary>
+            Хранятся цвета символов
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.ScreenPixel.BackgroundColor">
+            <summary>
+            Хранятся цвета за символами
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.ScreenPixel.Empty">
+            <summary>
+            Представляет собой пустой пиксель.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.ToDefault(System.Char,System.ConsoleColor,System.ConsoleColor)">
+            <summary>
+            Установить все значения структуры по умолчанию
+            </summary>
+            <param name="C">Устанавлевает значение символа</param>
+            <param name="F">Устанавливает значение верхнего цвета</param>
+            <param name="B">Устанавливает значение заднего цвета</param>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.op_Equality(SidStrikeEngine.Game.ScreenPixel,SidStrikeEngine.Game.ScreenPixel)">
+            <summary>
+            Сравнивает содержимое структуры ScreenPixel
+            </summary>
+            <returns>true, если все поля обоих структур равны</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.op_Inequality(SidStrikeEngine.Game.ScreenPixel,SidStrikeEngine.Game.ScreenPixel)">
+            <summary>
+            Сравнивает содержимое структуры ScreenPixel
+            </summary>
+            <returns>true, если любое поле одной структуры не равно другой</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.Equals(System.Object)">
+            <summary>
+            Показывает, равен ли этот экземпляр заданному объекту.
+            </summary>
+            <param name="obj">Объект для сравнения с текущим экземпляром.</param>
+            <returns>Значение true, если obj и данный экземпляр относятся к одному типу и представляют
+            одинаковые значения; в противном случае — значение false.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.GetHashCode">
+            <summary>
+            Возвращает хэш-код для данного экземпляра.
+            </summary>
+            <returns>32-разрядное целое число со знаком, являющееся хэш-кодом для данного экземпляра.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.ToString">
+            <summary>
+            Возвращает полное содержание этого экземпляра.
+            </summary>
+            <returns>Объект типа System.String, содержащий полное имя типа.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Game.ScreenPixel.Parse(System.String)">
+            <summary>
+            Переводит текстовое представление в ScreenPixel
+            </summary>
+            <param name="text">Текстовое представление пикселя.</param>
+            <returns>Экземпляр пикселя из текста.</returns>
+        </member>
+        <member name="T:SidStrikeEngine.Game.Camera">
+            <summary>
+            Реализует камеру
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Game.Camera.position">
+            <summary>
+            Левый верхний угол камеры.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Game.Camera.#ctor(SidStrikeEngine.Point)">
+            <summary>
+            Создание экземпляра камеры.
+            </summary>
+            <param name="position">Положение камеры.</param>
+        </member>
+        <member name="T:SidStrikeEngine.ISidStrikeEngineGame">
+            <summary>
+            Интерфейс, который подтверждает, что исполняемый код является игрой на движке SidStrikeEngine
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.ISidStrikeEngineGame.IsStart">
+            <summary>
+            Вызывается при старте игры.
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.ISidStrikeEngineGame.IsKeyPress">
+            <summary>
+            Вызывается при нажатии на кнопку во время игры.
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.ISidStrikeEngineGame.GoDraw">
+            <summary>
+            Вызывается во время, когда требуется отрисовать изображение.
+            </summary>
+        </member>
+        <member name="E:SidStrikeEngine.ISidStrikeEngineGame.GoTick">
+            <summary>
+            Вызывается во время, когда требуется продумать действия.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.ISidStrikeEngineGame.Run">
+            <summary>
+            Запускает игру.
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.ESidStrikeEngine">
+            <summary>
+            Класс индинтифицирует ошибки, которые возникли внутри библиотеки SidStrikeEngine.dll
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.ESidStrikeEngine.#ctor(System.String)">
+            <summary>
+            Создаёт экземпляр ошибки.
+            </summary>
+            <param name="about">Описание ошибки.</param>
+        </member>
+        <member name="P:SidStrikeEngine.ESidStrikeEngine.Message">
+            <summary>
+            Возвращает описание об ошибке.
+            </summary>
+        </member>
+        <member name="T:SidStrikeEngine.GameObject">
+            <summary>
+            Символизирует объект на экране
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.GameObject.position">
+            <summary>
+            Позиция объекта.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.GameObject.texture">
+            <summary>
+            Внешний вид объекта.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.#ctor">
+            <summary>
+            Инцилизация нового объекта с нулевыми координатами.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Инцилизация нового объекта с координатами.
+            </summary>
+            <param name="x">Абцисса объекта.</param>
+            <param name="y">Ордината объекта.</param>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.#ctor(SidStrikeEngine.Point)">
+            <summary>
+            Инцилизация нового объекта с координатами.
+            </summary>
+            <param name="position">Координаты объекта.</param>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.Draw(SidStrikeEngine.Game.GraphicState)">
+            <summary>
+            Установка задачи: нарисовать объект.
+            </summary>
+            <param name="State">Графическое состояние системы.</param>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.SqureIsCollision(SidStrikeEngine.GameObject,SidStrikeEngine.GameObject)">
+            <summary>
+            Говорит, внутри ли один объект в другом. Быстрая проверка.
+            </summary>
+            <param name="a">Первый объект, учавствующий в проверке касания.</param>
+            <param name="b">Второй объект, учавствующий в проверке касания.</param>
+            <returns>True, если два объекта действительно касаются.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.SqureIsCollisionAround(SidStrikeEngine.GameObject,SidStrikeEngine.GameObject)">
+            <summary>
+            Говорит, касается ли объект другого. Быстрая проверка.
+            </summary>
+            <param name="a">Первый объект, учавствующий в проверке касания.</param>
+            <param name="b">Второй объект, учавствующий в проверке касания.</param>
+            <returns>True, если два объекта действительно касаются.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.SqureIsCollision(SidStrikeEngine.GameObject,System.Collections.Generic.ICollection{SidStrikeEngine.GameObject})">
+            <summary>
+            Ищет первый объект из коллекции "right", на который наложился объект "left".
+            </summary>
+            <param name="left">Объект, с которым ведётся поиск.</param>
+            <param name="right">Список объектов, которые прикасаемые.</param>
+            <returns>Первый объект, который прикасается с объектом "left".</returns>
+        </member>
+        <member name="M:SidStrikeEngine.GameObject.ToString">
+            <summary>
+            Возвращает название этого объекта.
+            </summary>
+            <returns>Символьное обозначение этого объекта.</returns>
+        </member>
+        <member name="T:SidStrikeEngine.VideoInterface">
+            <summary>
+            Класс реализует GameObject, который отрисовывается на экране вне зависимости от состояния камеры.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.VideoInterface.#ctor">
+            <summary>
+            Инцилизация нового элемента интерфеса с нулевыми координатами.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.VideoInterface.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Инцилизация нового элемента интерфеса с координатами.
+            </summary>
+            <param name="x">Абцисса интерфеса на экране.</param>
+            <param name="y">Ордината интерфеса на экране.</param>
+        </member>
+        <member name="M:SidStrikeEngine.VideoInterface.#ctor(SidStrikeEngine.Point)">
+            <summary>
+            Инцилизация нового элемента интерфеса с координатами.
+            </summary>
+            <param name="position">Координаты интерфеса на экране.</param>
+        </member>
+        <member name="M:SidStrikeEngine.VideoInterface.Draw(SidStrikeEngine.Game.GraphicState)">
+            <summary>
+            Установка задачи: нарисовать интерфейс. 
+            Отличием от объекта в том, что камера не используется.
+            </summary>
+            <param name="State">Графическое состояние системы.</param>
+        </member>
+        <member name="T:SidStrikeEngine.ITexture">
+            <summary>
+            Интерфес говорит, что данный класс является текстурой.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.ITexture.Pixel">
+            <summary>
+            Представляет информацию о каждом символе текстуры.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.ITexture.Size">
+            <summary>
+            Получает размер текстуры.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.ITexture.SetInteger(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Вставляет число в текстуру.
+            </summary>
+            <param name="value">Значение, которое надо вставить.</param>
+            <param name="x">Положение, куда надо вставить первую цифру по X координате..</param>
+            <param name="y">Положение, куда надо вставить первую цифру по Y координате.</param>
+            <param name="lenght">Максимальная длинна.</param>
+        </member>
+        <member name="T:SidStrikeEngine.DynamicTexture">
+            <summary>
+            Реализует хранение текстуры объекта.
+            В отличии от обычной текстуры, позволяет быстро менять свои параметры.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.DynamicTexture.Pixel">
+            <summary>
+            Хранит текстуры объекта.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.DynamicTexture.SetChars(System.Char[])">
+            <summary>
+            Устанавливает новую текстуру. При недостатке памяти выделяется дополнительно.
+            </summary>
+            <param name="Input">Поток символов, которые загружаются в текстуру. \0 - прозрачная. \n - новая строка.</param>
+        </member>
+        <member name="M:SidStrikeEngine.DynamicTexture.SetCharsFast(System.Char[])">
+            <summary>
+            Устанавливает новую текстуру. При недостатке памяти вырабатывается исключение.
+            </summary>
+            <param name="Input">Поток символов, которые загружаются в текстуру. \0 - прозрачная. \n - новая строка.</param>
+        </member>
+        <member name="M:SidStrikeEngine.DynamicTexture.#ctor(SidStrikeEngine.Game.ScreenPixel[0:,0:])">
+            <summary>
+            Построение текстуры.
+            </summary>
+            <param name="Pixel">Пиксельное содержание.</param>
+        </member>
+        <member name="M:SidStrikeEngine.DynamicTexture.#ctor(System.Char[0:,0:],System.ConsoleColor[0:,0:],System.ConsoleColor[0:,0:])">
+            <summary>
+            Построение текстуры
+            </summary>
+            <param name="texture">Символьное содержание</param>
+            <param name="ColorsForeground">Цветное символьное содержание</param>
+            <param name="ColorsBackground">Цветное засимвольное содержание</param>
+        </member>
+        <member name="M:SidStrikeEngine.DynamicTexture.#ctor(System.String,System.ConsoleColor,System.ConsoleColor)">
+            <summary>
+            Построение строковой текстуры.
+            </summary>
+            <param name="Text">Текст, который должен быть преобразован в текстуру.</param>
+            <param name="ColorsForeground">Цвет символов текстуры.</param>
+            <param name="ColorBackground">Цвет фона текстуры.</param>
+        </member>
+        <member name="M:SidStrikeEngine.DynamicTexture.#ctor(System.Char,System.ConsoleColor,System.ConsoleColor)">
+            <summary>
+            Построение текстуры
+            </summary>
+            <param name="texture">Символ-текстура</param>
+            <param name="ColorForeground">Цвет символа-текстуры</param>
+            <param name="ColorBackground">Фон символа-текстуры</param>
+        </member>
+        <member name="T:SidStrikeEngine.Texture">
+            <summary>
+            Реализует хранение текстуры объекта
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Texture.Pixel">
+            <summary>
+            Хранит текстуры объекта.
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Texture.p_Size">
+            <summary>
+            Кэш значения размера
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Texture.Size">
+            <summary>
+            Получить размер текстуры.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Texture.SetInteger(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Вставляет число в текстуру.
+            </summary>
+            <param name="value">Значение, которое надо вставить.</param>
+            <param name="x">Положение, куда надо вставить первую цифру по X координате..</param>
+            <param name="y">Положение, куда надо вставить первую цифру по Y координате.</param>
+            <param name="lenght">Максимальная длинна.</param>
+        </member>
+        <member name="P:SidStrikeEngine.Texture.Size_X">
+            <summary>
+            Получает ширину (влево-вправо) текстуры
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Texture.Size_Y">
+            <summary>
+            Получает высоту (вверх-вниз) текстуры
+            </summary>
+        </member>
+        <member name="F:SidStrikeEngine.Texture.NewLine">
+            <summary>
+            Какие символы считаются новой строкой
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Texture.#ctor(System.String,System.ConsoleColor,System.ConsoleColor)">
+            <summary>
+            Построение строковой текстуры.
+            </summary>
+            <param name="Text">Текст, который должен быть преобразован в текстуру.</param>
+            <param name="ColorsForeground">Цвет символов текстуры.</param>
+            <param name="ColorBackground">Цвет фона текстуры.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Texture.#ctor(SidStrikeEngine.Game.ScreenPixel[0:,0:])">
+            <summary>
+            Построение текстуры.
+            </summary>
+            <param name="Pixel">Пиксельное содержание.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Texture.#ctor(System.Char[0:,0:],System.ConsoleColor[0:,0:],System.ConsoleColor[0:,0:])">
+            <summary>
+            Построение текстуры
+            </summary>
+            <param name="texture">Символьное содержание</param>
+            <param name="ColorsForeground">Цветное символьное содержание</param>
+            <param name="ColorsBackground">Цветное засимвольное содержание</param>
+        </member>
+        <member name="M:SidStrikeEngine.Texture.#ctor(System.Char,System.ConsoleColor,System.ConsoleColor)">
+            <summary>
+            Построение текстуры
+            </summary>
+            <param name="texture">Символ-текстура</param>
+            <param name="ColorForeground">Цвет символа-текстуры</param>
+            <param name="ColorBackground">Фон символа-текстуры</param>
+        </member>
+        <member name="F:SidStrikeEngine.Texture.Error">
+            <summary>
+            Текстура по-умлочанию.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Texture.op_Explicit(System.Char)~SidStrikeEngine.Texture">
+            <summary>
+            Конвектирует символ в текстуру цветов из Console.
+            </summary>
+            <param name="v">Символ, который нужно перевести в текстуру</param>
+        </member>
+        <member name="T:SidStrikeEngine.Point">
+            <summary>
+            Структура, которая содержит в себе пару координат, записанные целым числом.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Point.X">
+            <summary>
+            Ось абсцисс.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Point.Y">
+            <summary>
+            Ось ординат.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Point.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Создаёт новый экземпляр структуры.
+            </summary>
+            <param name="x">Задать значение координате абсцисс.</param>
+            <param name="y">Задать значение координате ординат.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Point.Add(System.Int32,System.Int32)">
+            <summary>
+            Суммирует существующие координаты с новыми, не создавая новых объектов на куче. Возвращает этот же экземпляр.
+            </summary>
+            <param name="x">Сколько добавить к координате по оси абцисс.</param>
+            <param name="y">Сколько добавить к координате по оси ординат.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Point.Add(System.Int32)">
+            <summary>
+            Суммирует существующие координаты с новыми, не создавая новых объектов на куче. Возвращает этот же экземпляр.
+            </summary>
+            <param name="t">Сколько добавить к обоим координатам.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Point.Add(SidStrikeEngine.Point)">
+            <summary>
+            Суммирует существующие координаты с новыми, не создавая новых объектов на куче. Возвращает этот же экземпляр.
+            </summary>
+            <param name="pos">Прибавляет новые координаты к существующим.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Point.Set(System.Int32,System.Int32)">
+            <summary>
+            Устанавливает новые значения свойств X и Y.
+            </summary>
+            <param name="x">Новое значение для оси абсцисс.</param>
+            <param name="y">Новое значение для оси ординат.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_Addition(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Возвращает сумму координат в новом экземпляре: (X1 + X2; Y1 + Y2).
+            </summary>
+            <param name="a">Первое слагаемое.</param>
+            <param name="b">Второе слагаемое.</param>
+            <returns>Новый экземпляр суммы этих координат.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_Subtraction(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Возвращает разность координат в новом экземпляре: (X1 - X2;  Y1 - Y2).
+            </summary>
+            <param name="a">Уменьшаемая координата.</param>
+            <param name="b">Вычитаемая координата.</param>
+            <returns>Новый экземпляр разности этих координат.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_Equality(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Сравнивает две координаты в формате (X1 == X2 и Y1 == Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если координаты равны.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_Inequality(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Сравнивает две координаты в формате (X1 != X2 или Y1 != Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если координаты не равны.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_GreaterThan(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Сравнивает две координаты в формате (X1 > X2 и Y1 > Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата больше второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_LessThan(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Сравнивает две координаты в формате (X1 &lt; X2 и Y1 &lt; Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата меньше второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_LessThanOrEqual(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Сравнивает две координаты в формате (X1 &lt;= X2 и Y1 &lt;= Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата меньше или равна второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_GreaterThanOrEqual(SidStrikeEngine.Point,SidStrikeEngine.Point)">
+            <summary>
+            Сравнивает две координаты в формате (X1 >= X2 и Y1 >= Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата больше или равна второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.Equals(System.Object)">
+            <summary>
+            Показывает, равен ли экземпляр данному объекту.
+            </summary>
+            <param name="obj">Объект для сравнения с текущем экземпляром.</param>
+            <returns>Значение true, если obj и данный экземпляр относятся к одному типу и представляют
+            одинаковые значения; в противном случае — значение false.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.GetHashCode">
+            <summary>
+            Возвращает хэш-код данного экземпляра.
+            </summary>
+            <returns>32-разрядное целое число со знаком, являющееся хэш-кодом для данного экземпляра.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Point.ToString">
+            <summary>
+            Получает координаты в строковом виде формате (X; Y)
+            </summary>
+            <returns>Строковое представление координат.</returns>
+        </member>
+        <member name="F:SidStrikeEngine.Point.Empty">
+            <summary>
+            Возвращает пустые координаты
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Point.op_Explicit(SidStrikeEngine.Coordinate)~SidStrikeEngine.Point">
+            <summary>
+            Переводит координаты с плавующей точкой в координаты целых чисел.
+            </summary>
+            <param name="v">Координаты с плавающей точкой.</param>
+        </member>
+        <member name="T:SidStrikeEngine.Coordinate">
+            <summary>
+            Структура, которая содержит в себе пару координат с плавающей точкой.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Coordinate.X">
+            <summary>
+            Ось абсцисс.
+            </summary>
+        </member>
+        <member name="P:SidStrikeEngine.Coordinate.Y">
+            <summary>
+            Ось ординат.
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.#ctor(System.Single,System.Single)">
+            <summary>
+            Создаёт новый экземпляр структуры координат с плавающей точкой.
+            </summary>
+            <param name="x">Задать значение координате абсцисс.</param>
+            <param name="y">Задать значение координате ординат.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.#ctor(SidStrikeEngine.Point)">
+            <summary>
+            Создаёт новый экземпляр структуры координат с плавающей точкой.
+            </summary>
+            <param name="position">Задать значение координат точкой.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.Add(System.Single,System.Single)">
+            <summary>
+            Суммирует существующие координаты с новыми, не создавая новых объектов на куче. Возвращает этот же экземпляр.
+            </summary>
+            <param name="x">Сколько добавить к координате по оси абцисс.</param>
+            <param name="y">Сколько добавить к координате по оси ординат.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.Add(System.Single)">
+            <summary>
+            Суммирует существующие координаты с новыми, не создавая новых объектов на куче. Возвращает этот же экземпляр.
+            </summary>
+            <param name="t">Сколько добавить к обоим координатам.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.Add(SidStrikeEngine.Point)">
+            <summary>
+            Суммирует существующие координаты с новыми, не создавая новых объектов на куче. Возвращает этот же экземпляр.
+            </summary>
+            <param name="pos">Прибавляет новые координаты к существующим.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.Set(System.Single,System.Single)">
+            <summary>
+            Устанавливает новые значения свойств X и Y.
+            </summary>
+            <param name="x">Новое значение для оси абсцисс.</param>
+            <param name="y">Новое значение для оси ординат.</param>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_Addition(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Возвращает сумму координат в новом экземпляре: (X1 + X2; Y1 + Y2).
+            </summary>
+            <param name="a">Первое слагаемое.</param>
+            <param name="b">Второе слагаемое.</param>
+            <returns>Новый экземпляр суммы этих координат.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_Subtraction(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Возвращает разность координат в новом экземпляре: (X1 - X2;  Y1 - Y2).
+            </summary>
+            <param name="a">Уменьшаемая координата.</param>
+            <param name="b">Вычитаемая координата.</param>
+            <returns>Новый экземпляр разности этих координат.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_Equality(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Сравнивает две координаты в формате (X1 == X2 и Y1 == Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если координаты равны.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_Inequality(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Сравнивает две координаты в формате (X1 != X2 или Y1 != Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если координаты не равны.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_GreaterThan(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Сравнивает две координаты в формате (X1 > X2 и Y1 > Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата больше второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_LessThan(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Сравнивает две координаты в формате (X1 &lt; X2 и Y1 &lt; Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата меньше второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_LessThanOrEqual(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Сравнивает две координаты в формате (X1 &lt;= X2 и Y1 &lt;= Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата меньше или равна второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_GreaterThanOrEqual(SidStrikeEngine.Coordinate,SidStrikeEngine.Coordinate)">
+            <summary>
+            Сравнивает две координаты в формате (X1 >= X2 и Y1 >= Y2).
+            </summary>
+            <param name="a">Первая координата для сравнения.</param>
+            <param name="b">Вторая координата для сравнения.</param>
+            <returns>True, если первая координата больше или равна второй по обеим осям.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.Equals(System.Object)">
+            <summary>
+            Показывает, равен ли экземпляр данному объекту.
+            </summary>
+            <param name="obj">Объект для сравнения с текущем экземпляром.</param>
+            <returns>Значение true, если obj и данный экземпляр относятся к одному типу и представляют
+            одинаковые значения; в противном случае — значение false.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.GetHashCode">
+            <summary>
+            Возвращает хэш-код данного экземпляра.
+            </summary>
+            <returns>32-разрядное целое число со знаком, являющееся хэш-кодом для данного экземпляра.</returns>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.ToString">
+            <summary>
+            Получает координаты в строковом виде формате (X; Y)
+            </summary>
+            <returns>Строковое представление координат.</returns>
+        </member>
+        <member name="F:SidStrikeEngine.Coordinate.Empty">
+            <summary>
+            Возвращает пустые координаты
+            </summary>
+        </member>
+        <member name="M:SidStrikeEngine.Coordinate.op_Explicit(SidStrikeEngine.Point)~SidStrikeEngine.Coordinate">
+            <summary>
+            Переводит координаты с целым числом в координаты с плавающим числом.
+            </summary>
+            <param name="v">Координаты, записанные целым числом.</param>
+        </member>
+    </members>
+</doc>
