@@ -18,11 +18,11 @@ namespace agents
             GoTick += Game1_GoTick;
             GoDraw += Game1_GoDraw;
             IsKeyPress += Game1_IsKeyPress;
-            people.Add(new Person(new Point(4, 5), GetAdsForce, GetTalkSpan));
-            people.Add(new Person(new Point(4, 7), GetAdsForce, GetTalkSpan));
+            for (int i = 0; i < 100; i++)
+                people.Add();
             gameObjectSpeed.texture = new DynamicTexture("Speed:\0\0\0\0\0\0\0\0\0\0\0", ConsoleColor.Blue, ConsoleColor.Black);
             gameObjectAdsForce.texture = new DynamicTexture("AdsForce:   %", ConsoleColor.Blue, ConsoleColor.Black);
-            TimeSpeed = 60f * 60f * 16f;
+            TimeSpeed = 60f * 60f;
             AdsForce = 0.2f;
         }
 
@@ -62,7 +62,7 @@ namespace agents
         {
             get => adsForce; set
             {
-                if (float.IsNaN(value) || value < 0)
+                if (float.IsNaN(value) || value < 0 || value > 1)
                     return;
                 adsForce = value;
                 gameObjectAdsForce.texture.Pixel[0, 9].Pixel = gameObjectAdsForce.texture.Pixel[0, 10].Pixel = gameObjectAdsForce.texture.Pixel[0, 10].Pixel = '\0';
