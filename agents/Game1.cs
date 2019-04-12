@@ -14,7 +14,9 @@ namespace agents
             new CharacteristicInterface<float>(
                 16f * 60f * 60f, 0, 0, "speed: ", ConsoleColor.Cyan, ConsoleColor.Black,
                 (float f) => f > 0.0f);
-        private readonly VideoInterface gameObjectAdsForce = new VideoInterface(0, 1);
+        private readonly CharacteristicInterface<float> adsForce = new CharacteristicInterface<float>(
+            0.005f, 0, 1, "Сила рекламы: ", ConsoleColor.Cyan, ConsoleColor.Black,
+            (float f) => f >= 0.0f && f <= 1.0f, (float f) => f.ToString("G3"));
         private readonly VideoInterface gameObjectLeft = new VideoInterface(0, 2);
         private readonly Random ran = new Random();
 
@@ -33,12 +35,10 @@ namespace agents
                     p.X -= w;
                     p.Y++;
                 }
-                people.Add(new Person(p, GetAdsForce, GetTalkSpan, GetShelfLife, () => new TimeSpan(1, 0, 0)));
+                people.Add(new Person(p, adsForce.GetValue, GetTalkSpan, GetShelfLife, () => new TimeSpan(1, 0, 0)));
             }
-            gameObjectAdsForce.texture = new DynamicTexture("AdsForce:   %", ConsoleColor.Blue, ConsoleColor.Black);
             gameObjectLeft.texture = new Texture(" \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n",
                 ConsoleColor.White, ConsoleColor.Black);
-            AdsForce = 0.000f;
         }
 
         private TimeSpan ShelfLife { get; set; }
@@ -56,7 +56,7 @@ namespace agents
                 case ConsoleKey.UpArrow: camera.position.Add(0, -1); break;
                 case ConsoleKey.DownArrow: camera.position.Add(0, +1); break;
                 case ConsoleKey.F1: timeSpeed.Value *= (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95f : 1.05f); break;
-                case ConsoleKey.F2: AdsForce += 0.002f * (KeyPress.Modifiers == ConsoleModifiers.Shift ? -1.0f : 1.0f); break;
+                case ConsoleKey.F2: adsForce.Value += 0.001f * (KeyPress.Modifiers == ConsoleModifiers.Shift ? -1.0f : 1.0f); break;
                 case ConsoleKey.R: base.GState.Size = new Point(Console.LargestWindowWidth, Console.LargestWindowHeight - 1); break;
             }
         }
@@ -65,20 +65,6 @@ namespace agents
         private TimeSpan GetTalkSpan() => TimeSpan.FromTicks((long)(talkSpan.Ticks / (float)timeSpeed));
         private Camera camera = new Camera();
 
-        private float adsForce;
-        private float GetAdsForce() => AdsForce;
-        public float AdsForce
-        {
-            get => adsForce; set
-            {
-                if (float.IsNaN(value) || value < 0 || value > 1)
-                    return;
-                adsForce = value;
-                gameObjectAdsForce.texture.Pixel[0, 9].Pixel = gameObjectAdsForce.texture.Pixel[0, 10].Pixel = gameObjectAdsForce.texture.Pixel[0, 10].Pixel = '\0';
-                gameObjectAdsForce.texture.SetInteger((int)(adsForce*100), 9, 0);
-            }
-        }
-
         private void Game1_GoDraw(TimeSpan TimeOldDraw, GraphicState GState)
         {
             System.Threading.Thread.Sleep(1);
@@ -86,7 +72,7 @@ namespace agents
             GState.camera.Set(camera.position.X, camera.position.Y);
             foreach (Person person in people)
                 person.Draw(GState);
-            gameObjectAdsForce.Draw(GState);
+            adsForce.Draw(GState);
             timeSpeed.Draw(GState);
         }
 
@@ -268,7 +254,8 @@ namespace agents
             /// <param name="ColorsForeground">Цвет заполнения.</param>
             /// <param name="ColorBackground">Цвет фона.</param>
             /// <param name="checkSet">Проверка записи в легенду.</param>
-            public CharacteristicInterface(T value, int X, int Y, string legend, ConsoleColor ColorsForeground, ConsoleColor ColorBackground, Func<T, bool> checkSet)
+            /// <param name="toString">Правила преобразования хранимой характеристики.</param>
+            public CharacteristicInterface(T value, int X, int Y, string legend, ConsoleColor ColorsForeground, ConsoleColor ColorBackground, Func<T, bool> checkSet = null, Func<T, string> toString = null)
             {
                 base.texture = new DynamicTexture(legend, ColorsForeground, ColorBackground);
                 this.colorContainer = new ScreenPixel()
@@ -276,7 +263,14 @@ namespace agents
                     ForegroundColor = ColorsForeground,
                     BackgroundColor = ColorBackground
                 };
-                this.checkSet = checkSet;
+                if (checkSet == null)
+                    this.checkSet = (T t) => true;
+                else
+                    this.checkSet = checkSet;
+                if (toString == null)
+                    this.toString = (T t) => t.ToString();
+                else
+                    this.toString = toString;
                 this.legend = legend;
                 this.Value = value;
                 base.position.Set(X, Y);
@@ -284,6 +278,7 @@ namespace agents
 
 
             private readonly Func<T, bool> checkSet;
+            private readonly Func<T, string> toString;
             private T _value;
             public T Value
             {
@@ -296,16 +291,16 @@ namespace agents
                     if (checkSet(value))
                     {
                         _value = value;
-                        string write = legend + value;
+                        string write = legend + toString(value);
                         if (write.Length > base.texture.Pixel.GetLength(1))
                         {
                             ((DynamicTexture)base.texture).Pixel =
                                 new ScreenPixel[base.texture.Pixel.GetLength(0), write.Length];
-                            for (int x = 0; x < base.texture.Pixel.GetLength(1); x++)
-                                for (int y = 0; y < base.texture.Pixel.GetLength(0); y++)
-                                        base.texture.Pixel[y, x] = this.colorContainer;
                         }
-                        ((DynamicTexture)(base.texture)).SetCharsFast((legend + value).ToCharArray());
+                        for (int x = 0; x < base.texture.Pixel.GetLength(1); x++)
+                            for (int y = 0; y < base.texture.Pixel.GetLength(0); y++)
+                                base.texture.Pixel[y, x] = this.colorContainer;
+                        ((DynamicTexture)(base.texture)).SetCharsFast(write.ToCharArray());
                     }
                 }
             }
