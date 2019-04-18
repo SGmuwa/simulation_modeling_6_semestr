@@ -1,9 +1,6 @@
 ﻿using SidStrikeEngine;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace agents
 {
@@ -15,8 +12,20 @@ namespace agents
                 16f * 60f * 60f, 0, 0, "speed: ", ConsoleColor.Cyan, ConsoleColor.Black,
                 (float f) => f > 0.0f);
         private readonly CharacteristicInterface<float> adsForce = new CharacteristicInterface<float>(
-            0.005f, 0, 1, "Сила рекламы: ", ConsoleColor.Cyan, ConsoleColor.Black,
+            0.000f, 0, 1, "Сила рекламы: ", ConsoleColor.Cyan, ConsoleColor.Black,
             (float f) => f >= 0.0f && f <= 1.0f, (float f) => f.ToString("G3"));
+        private readonly CharacteristicInterface<TimeSpan> deleveryTime =
+            new CharacteristicInterface<TimeSpan>(TimeSpan.FromHours(24+12), 0, 2, "Время доставки: ",
+                ConsoleColor.Cyan, ConsoleColor.Black);
+        private readonly CharacteristicInterface<DateTime> timeInGame =
+            new CharacteristicInterface<DateTime>(DateTime.MinValue, 0, 3, "Время: ",
+                ConsoleColor.Black, ConsoleColor.White);
+        private readonly CharacteristicInterface<TimeSpan> shelfLife =
+            new CharacteristicInterface<TimeSpan>(TimeSpan.FromDays(30 * 12), 0, 4, "Срок годности: ",
+                ConsoleColor.Cyan, ConsoleColor.Black);
+        private readonly CharacteristicInterface<TimeSpan> talkSpan =
+            new CharacteristicInterface<TimeSpan>(TimeSpan.FromHours(11), 0, 5, "Talk span: ",
+                ConsoleColor.Cyan, ConsoleColor.Black);
         private readonly VideoInterface gameObjectLeft = new VideoInterface(0, 2);
         private readonly Random ran = new Random();
 
@@ -26,8 +35,8 @@ namespace agents
             GoDraw += Game1_GoDraw;
             IsKeyPress += Game1_IsKeyPress;
             int w = base.GState.Size.X;
-            Point p = new Point(0, 2);
-            for (int i = 0; i < 5; i++)
+            Point p = new Point(0, 6);
+            for (int i = 0; i < 2000; i++)
             {
                 p.X += ran.Next(1, 3);
                 if (p.X > w)
@@ -35,20 +44,15 @@ namespace agents
                     p.X -= w;
                     p.Y++;
                 }
-                people.Add(new Person(p, adsForce.GetValue, GetTalkSpan, GetShelfLife, () => new TimeSpan(1, 0, 0)));
+                people.Add(new Person(p, this));
             }
             gameObjectLeft.texture = new Texture(" \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n",
                 ConsoleColor.White, ConsoleColor.Black);
         }
 
-        private TimeSpan ShelfLife { get; set; }
-        private TimeSpan GetShelfLife()
-        {
-            return TimeSpan.FromTicks((long)(ShelfLife.Ticks / timeSpeed.Value));
-        }
-
         private void Game1_IsKeyPress(ConsoleKeyInfo KeyPress)
         {
+            Console.Title = KeyPress.KeyChar.ToString();
             switch(KeyPress.Key)
             {
                 case ConsoleKey.LeftArrow: camera.position.Add(-1, 0); break;
@@ -61,8 +65,6 @@ namespace agents
             }
         }
 
-        private TimeSpan talkSpan = new TimeSpan(0, 16, 0, 0, 0);
-        private TimeSpan GetTalkSpan() => TimeSpan.FromTicks((long)(talkSpan.Ticks / (float)timeSpeed));
         private Camera camera = new Camera();
 
         private void Game1_GoDraw(TimeSpan TimeOldDraw, GraphicState GState)
@@ -74,11 +76,17 @@ namespace agents
                 person.Draw(GState);
             adsForce.Draw(GState);
             timeSpeed.Draw(GState);
+            deleveryTime.Draw(GState);
+            timeInGame.Draw(GState);
+            shelfLife.Draw(GState);
+            talkSpan.Draw(GState);
         }
 
         private void Game1_GoTick(TimeSpan TimeOldTick)
         {
             System.Threading.Thread.Sleep(1);
+            if(TimeOldTick.TotalHours < 24)
+                timeInGame.Value = timeInGame.Value.AddSeconds(TimeOldTick.TotalSeconds * timeSpeed.Value);
             foreach (Person person in people)
                 person.Tick(people);
             return;
@@ -95,14 +103,11 @@ namespace agents
             /// <param name="position">Местоположение человека.</param>
             /// <param name="getAdsForce">Получение силы рекламной компании.
             /// Ожидается возвращаение от 0 до 1.</param>
-            public Person(Point position, Func<float> getAdsForce, Func<TimeSpan> getTalkSpan, Func<TimeSpan> GetShelfLife, Func<TimeSpan> GetDelivery)
+            public Person(Point position, Game1 game)
             {
                 this.position = position;
-                this.getAdsForce = getAdsForce;
                 this.State = STATE.not_want;
-                this.getTalkSpan = getTalkSpan;
-                this.GetDelivery = GetDelivery;
-                this.GetShelfLife = GetShelfLife;
+                this.game = game;
             }
 
             /// <summary>
@@ -123,20 +128,11 @@ namespace agents
                 wait,
                 use
             }
-
-            /// <summary>
-            /// Получение силы рекламной компании от внешней среды.
-            /// </summary>
-            private readonly Func<float> getAdsForce;
-            private readonly Func<TimeSpan> GetShelfLife;
-            private readonly Func<TimeSpan> GetDelivery;
+            
             private static readonly Random ran = new Random();
             private STATE state = STATE.not_want;
-            private DateTime lastTalk = DateTime.Now;
-            /// <summary>
-            /// Получение переодичности разговоров.
-            /// </summary>
-            private readonly Func<TimeSpan> getTalkSpan;
+            private DateTime lastTalk = DateTime.MinValue;
+            private DateTime timeOfStartDelevery;
 
             /// <summary>
             /// Изменение или получение состояния человека.
@@ -145,6 +141,8 @@ namespace agents
             {
                 set
                 {
+                    if (value == STATE.wait)
+                        timeOfStartDelevery = (DateTime)game.timeInGame;
                     state = value;
                     texture = textureContent[(byte)value];
                 }
@@ -153,10 +151,20 @@ namespace agents
                     return state;
                 }
             }
+
+            private readonly Game1 game;
+
             public void Tick(ICollection<Person> people)
             {
-                GetPackage();
-                Use();
+                switch (State)
+                {
+                    case STATE.wait:
+                        GetPackage();
+                        break;
+                    case STATE.use:
+                        Use();
+                        break;
+                }
                 Talk(people);
             }
 
@@ -165,7 +173,7 @@ namespace agents
             /// </summary>
             private void Use()
             {
-                if (DateTime.Now - lastTalk < GetShelfLife())
+                if ((DateTime)game.timeInGame - lastTalk > (TimeSpan)game.shelfLife)
                     State = STATE.not_want;
             }
 
@@ -174,7 +182,7 @@ namespace agents
             /// </summary>
             private void GetPackage()
             {
-                if (DateTime.Now - lastTalk < GetDelivery())
+                if ((DateTime)game.timeInGame - timeOfStartDelevery > (TimeSpan)game.deleveryTime)
                     State = STATE.use;
             }
 
@@ -187,14 +195,15 @@ namespace agents
             /// <param name="people"></param>
             public void Talk(ICollection<Person> people)
             {
-                if (DateTime.Now - lastTalk < getTalkSpan())
+                if ((DateTime)game.timeInGame - lastTalk < (TimeSpan)game.talkSpan)
                     // Слишком часто разговаривать нельзя.
                     return;
+                lastTalk = DateTime.Now;
                 int count = 0; // Количество разговоров.
                 foreach (Person person in people)
                 {
                     if (Equals(person)) continue;
-                    if (ran.NextDouble() <= 0.020f / (count)) // Шанс того, что заговорит.
+                    if (ran.NextDouble() <= 0.0002f / (count)) // Шанс того, что заговорит.
                     {
                         count++;
                         switch (State)
@@ -203,15 +212,15 @@ namespace agents
                              Шанс того, что человек заговорит о товаре не 100%.
                              */
                             case STATE.not_want:
-                                if (ran.NextDouble() <= (0.001f + getAdsForce()) / 2.0f)
+                                if (ran.NextDouble() <= (0.001f + (float)game.adsForce) / 2.0f)
                                     person.TakeMessage(this);
                                 break;
                             case STATE.wait:
-                                if (ran.NextDouble() <= (0.8f + getAdsForce()) / 2.0f)
+                                if (ran.NextDouble() <= (0.8f + (float)game.adsForce) / 2.0f)
                                     person.TakeMessage(this);
                                 break;
                             case STATE.use:
-                                if (ran.NextDouble() <= (0.4f + getAdsForce()) / 2.0f)
+                                if (ran.NextDouble() <= (0.4f + (float)game.adsForce) / 2.0f)
                                     person.TakeMessage(this);
                                 break;
                         }
@@ -230,11 +239,11 @@ namespace agents
                 /*
                  Шанс того, что другой человек послушает его - не 100%.
                  */
-                if (from.State == STATE.not_want && ran.NextDouble() <= (0.001f + getAdsForce()) / 2.0f)
+                if (from.State == STATE.not_want && ran.NextDouble() <= (0.001f + (float)game.adsForce) / 2.0f)
                     State = STATE.wait;
-                else if (from.State == STATE.wait && ran.NextDouble() <= (0.05f + getAdsForce()) / 2.0f)
+                else if (from.State == STATE.wait && ran.NextDouble() <= (0.05f + (float)game.adsForce) / 2.0f)
                     State = STATE.wait;
-                else if (from.State == STATE.use && ran.NextDouble() <= (0.2f + getAdsForce()) / 2.0f)
+                else if (from.State == STATE.use && ran.NextDouble() <= (0.2f + (float)game.adsForce) / 2.0f)
                     State = STATE.wait;
             }
         }
