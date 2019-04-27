@@ -1,7 +1,9 @@
 ﻿using SidStrikeEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace agents
 {
@@ -30,24 +32,27 @@ namespace agents
             new CharacteristicInterface<TimeSpan>(TimeSpan.FromHours(11), 0, 5, "Talk span: ",
                 ConsoleColor.Cyan, ConsoleColor.Black);
         private readonly VideoInterface gameObjectLeft = new VideoInterface(0, 2);
+        private readonly VisualTable<LinePersons> table = new VisualTable<LinePersons>(0, 0);
+
         private readonly Random ran = new Random();
 
         public Game1()
         {
+            /*
             Console.SetWindowSize(1, 1);
             Console.SetBufferSize((int)(Console.LargestWindowWidth - 1), (int)(Console.LargestWindowHeight - 1));
             Console.WindowHeight = Console.BufferHeight;
             Console.WindowWidth = Console.BufferWidth;
-            base.GState.Size = new Point(Console.WindowWidth, Console.WindowHeight);
+            base.GState.Size = new Point(Console.WindowWidth, Console.WindowHeight);*/
 
             GoTick += Game1_GoTick;
             GoDraw += Game1_GoDraw;
             IsKeyPress += Game1_IsKeyPress;
             int w = base.GState.Size.X;
             Point p = new Point(0, 6);
-            for (int i = 0; i < (base.GState.Size.Y - 6) * base.GState.Size.X; i++)
+            for (int i = 0; i < (base.GState.Size.Y - 9) * base.GState.Size.X; i++)
             {
-                p.X += ran.Next(1, 3);
+                p.X += ran.Next(1, 10);
                 if (p.X > w)
                 {
                     p.X -= w;
@@ -55,6 +60,7 @@ namespace agents
                 }
                 people.Add(new Person(p, this));
             }
+            table.position.Y = p.Y + 1;
             gameObjectLeft.texture = new Texture(" \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n",
                 ConsoleColor.White, ConsoleColor.Black);
         }
@@ -72,12 +78,13 @@ namespace agents
                 case ConsoleKey.F3: deleveryTime.Value = new TimeSpan(1 + (long)(deleveryTime.Value.Ticks * (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95 : 1.05))); break;
                 case ConsoleKey.F4: shelfLife.Value = new TimeSpan(1 + (long)(shelfLife.Value.Ticks * (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95 : 1.05))); break;
                 case ConsoleKey.F5: talkSpan.Value = new TimeSpan(1 + (long)(talkSpan.Value.Ticks * (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95 : 1.05))); break;
+                case ConsoleKey.Spacebar: table.Add(new LinePersons((DateTime)timeInGame, people)); break;
                 case ConsoleKey.R:
                     {
                         Point must = new Point(Console.LargestWindowWidth, Console.LargestWindowHeight - 1);
                         while (!base.GState.Size.Equals(must))
                         {
-                            base.GState.Size = new Point(Console.WindowWidth, Console.WindowHeight - 1);
+                            base.GState.Size = must;
                             System.Threading.Thread.Sleep(1);
                         }
                         Console.BufferWidth = Console.WindowWidth;
@@ -102,6 +109,7 @@ namespace agents
             timeInGame.Draw(GState);
             shelfLife.Draw(GState);
             talkSpan.Draw(GState);
+            table.Draw(GState);
         }
 
         private void Game1_GoTick(TimeSpan TimeOldTick)
@@ -278,8 +286,14 @@ namespace agents
             }
         }
 
-        class VisualTable : GameObject
+        /// <summary>
+        /// Представляет собой графическую таблицу.
+        /// </summary>
+        class VisualTable<Line> : GameObject, IList<Line>
         {
+            /// <summary>
+            /// Получение или присвоение цвета таблицы.
+            /// </summary>
             public ConsoleColor ColorForeground
             {
                 get
@@ -295,10 +309,14 @@ namespace agents
                         }
                 }
             }
-            private ConsoleColor ColorBackground
+            /// <summary>
+            /// Получение или присвоение цвета фона таблицы.
+            /// </summary>
+            public ConsoleColor ColorBackground
             {
                 get
                 {
+                    
                     return texture.Pixel[0, 0].BackgroundColor;
                 }
                 set
@@ -311,11 +329,133 @@ namespace agents
                 }
             }
 
+            private IList<Line> lines = new List<Line>();
+
             public VisualTable(int x, int y, ConsoleColor ColorForeground = ConsoleColor.Gray, ConsoleColor ColorBackground = ConsoleColor.Black)
                 : base(x, y)
             {
                 this.ColorForeground = ColorForeground;
                 this.ColorBackground = ColorBackground;
+                UpdateTextureFromList();
+            }
+
+            /// <summary>
+            /// Синхронизация текущего контейнера с отображением.
+            /// </summary>
+            private void UpdateTextureFromList()
+            {
+                if (Count == 0)
+                {
+                    base.texture = new Texture("Empty", ColorForeground, ColorBackground);
+                    return;
+                }
+                StringBuilder sb = new StringBuilder();
+                foreach(Line l in this)
+                {
+                    sb.AppendLine(l.ToString() + " ");
+                }
+                sb.Length--;
+                base.texture = new Texture(sb.Replace("\t", "   ").Replace("\0", "").ToString(), ColorForeground, ColorBackground);
+                
+            }
+            
+            public int Count => lines.Count;
+
+            public bool IsReadOnly => lines.IsReadOnly;
+
+            public Line this[int index]
+            {
+                get => lines[index]; set
+                {
+                    lines[index] = value;
+                    UpdateTextureFromList();
+                }
+            }
+
+            public int IndexOf(Line item)
+            {
+                return lines.IndexOf(item);
+            }
+
+            public void Insert(int index, Line item)
+            {
+                lines.Insert(index, item);
+                UpdateTextureFromList();
+            }
+
+            public void RemoveAt(int index)
+            {
+                lines.RemoveAt(index);
+                UpdateTextureFromList();
+            }
+
+            public void Add(Line item)
+            {
+                lines.Add(item);
+                UpdateTextureFromList();
+            }
+
+            public void Clear()
+            {
+                lines.Clear();
+                UpdateTextureFromList();
+            }
+
+            public bool Contains(Line item)
+            {
+                return lines.Contains(item);
+            }
+
+            public void CopyTo(Line[] array, int arrayIndex)
+            {
+                lines.CopyTo(array, arrayIndex);
+            }
+
+            public bool Remove(Line item)
+            {
+                return lines.Remove(item);
+                UpdateTextureFromList();
+            }
+
+            public IEnumerator<Line> GetEnumerator()
+            {
+                return lines.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return lines.GetEnumerator();
+            }
+        }
+
+        class LinePersons
+        {
+            public LinePersons(DateTime nowGame, IEnumerable<Person> people)
+            {
+                timeInGame = nowGame;
+                Person.STATE[] typesOfPeople = (Person.STATE[])Enum.GetValues(typeof(Person.STATE));
+                for (int i = 0; i < countPersons.Length; i++)
+                    countPersons[i] = people.SearchCount((Person p) => p.State == typesOfPeople[i]);
+            }
+
+            public LinePersons(DateTime nowGame, params int[] countPersons)
+            {
+                if (countPersons.Length != countPersons.Length)
+                    throw new ArgumentException();
+                countPersons.CopyTo(this.countPersons, 0);
+                timeInGame = nowGame;
+            }
+
+            public DateTime timeInGame;
+            public int[] countPersons = new int[Enum.GetValues(typeof(Person.STATE)).Length];
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder($"{timeInGame}\t");
+                foreach (int num in countPersons)
+                    sb.Append($"{num}\t");
+                sb.Length--;
+                return sb.ToString();
             }
         }
 
