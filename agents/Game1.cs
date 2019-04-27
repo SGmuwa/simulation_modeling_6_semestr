@@ -1,18 +1,21 @@
 ﻿using SidStrikeEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace agents
 {
     class Game1 : Game
     {
         private readonly List<Person> people = new List<Person>();
+        private readonly VideoInterface background = new VideoInterface(0, 0) {
+            texture = new Texture(string.Concat(Enumerable.Repeat(new string(' ', 500) + "\n", 500)), ConsoleColor.White, ConsoleColor.Black) };
         private readonly CharacteristicInterface<float> timeSpeed =
             new CharacteristicInterface<float>(
                 16f * 60f * 60f, 0, 0, "speed: ", ConsoleColor.Cyan, ConsoleColor.Black,
                 (float f) => f > 0.0f);
         private readonly CharacteristicInterface<float> adsForce = new CharacteristicInterface<float>(
-            0.000f, 0, 1, "Сила рекламы: ", ConsoleColor.Cyan, ConsoleColor.Black,
+            1.000f, 0, 1, "Сила рекламы: ", ConsoleColor.Cyan, ConsoleColor.Black,
             (float f) => f >= 0.0f && f <= 1.0f, (float f) => f.ToString("G3"));
         private readonly CharacteristicInterface<TimeSpan> deleveryTime =
             new CharacteristicInterface<TimeSpan>(TimeSpan.FromHours(24+12), 0, 2, "Время доставки: ",
@@ -21,7 +24,7 @@ namespace agents
             new CharacteristicInterface<DateTime>(DateTime.MinValue, 0, 3, "Время: ",
                 ConsoleColor.Black, ConsoleColor.White);
         private readonly CharacteristicInterface<TimeSpan> shelfLife =
-            new CharacteristicInterface<TimeSpan>(TimeSpan.FromDays(30 * 12), 0, 4, "Срок годности: ",
+            new CharacteristicInterface<TimeSpan>(TimeSpan.FromDays(5), 0, 4, "Срок годности: ",
                 ConsoleColor.Cyan, ConsoleColor.Black);
         private readonly CharacteristicInterface<TimeSpan> talkSpan =
             new CharacteristicInterface<TimeSpan>(TimeSpan.FromHours(11), 0, 5, "Talk span: ",
@@ -31,12 +34,18 @@ namespace agents
 
         public Game1()
         {
+            Console.SetWindowSize(1, 1);
+            Console.SetBufferSize((int)(Console.LargestWindowWidth - 1), (int)(Console.LargestWindowHeight - 1));
+            Console.WindowHeight = Console.BufferHeight;
+            Console.WindowWidth = Console.BufferWidth;
+            base.GState.Size = new Point(Console.WindowWidth, Console.WindowHeight);
+
             GoTick += Game1_GoTick;
             GoDraw += Game1_GoDraw;
             IsKeyPress += Game1_IsKeyPress;
             int w = base.GState.Size.X;
             Point p = new Point(0, 6);
-            for (int i = 0; i < 2000; i++)
+            for (int i = 0; i < (base.GState.Size.Y - 6) * base.GState.Size.X; i++)
             {
                 p.X += ran.Next(1, 3);
                 if (p.X > w)
@@ -52,7 +61,6 @@ namespace agents
 
         private void Game1_IsKeyPress(ConsoleKeyInfo KeyPress)
         {
-            Console.Title = KeyPress.KeyChar.ToString();
             switch(KeyPress.Key)
             {
                 case ConsoleKey.LeftArrow: camera.position.Add(-1, 0); break;
@@ -61,7 +69,20 @@ namespace agents
                 case ConsoleKey.DownArrow: camera.position.Add(0, +1); break;
                 case ConsoleKey.F1: timeSpeed.Value *= (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95f : 1.05f); break;
                 case ConsoleKey.F2: adsForce.Value += 0.001f * (KeyPress.Modifiers == ConsoleModifiers.Shift ? -1.0f : 1.0f); break;
-                case ConsoleKey.R: base.GState.Size = new Point(Console.LargestWindowWidth, Console.LargestWindowHeight - 1); break;
+                case ConsoleKey.F3: deleveryTime.Value = new TimeSpan(1 + (long)(deleveryTime.Value.Ticks * (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95 : 1.05))); break;
+                case ConsoleKey.F4: shelfLife.Value = new TimeSpan(1 + (long)(shelfLife.Value.Ticks * (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95 : 1.05))); break;
+                case ConsoleKey.F5: talkSpan.Value = new TimeSpan(1 + (long)(talkSpan.Value.Ticks * (KeyPress.Modifiers == ConsoleModifiers.Shift ? 0.95 : 1.05))); break;
+                case ConsoleKey.R:
+                    {
+                        Point must = new Point(Console.LargestWindowWidth, Console.LargestWindowHeight - 1);
+                        while (!base.GState.Size.Equals(must))
+                        {
+                            base.GState.Size = new Point(Console.WindowWidth, Console.WindowHeight - 1);
+                            System.Threading.Thread.Sleep(1);
+                        }
+                        Console.BufferWidth = Console.WindowWidth;
+                    }
+                    break;
             }
         }
 
@@ -70,6 +91,7 @@ namespace agents
         private void Game1_GoDraw(TimeSpan TimeOldDraw, GraphicState GState)
         {
             System.Threading.Thread.Sleep(1);
+            background.Draw(GState);
             gameObjectLeft.Draw(GState);
             GState.camera.Set(camera.position.X, camera.position.Y);
             foreach (Person person in people)
@@ -114,8 +136,11 @@ namespace agents
             /// Всевозможные текстуры для разных состояний человека.
             /// </summary>
             private static readonly Texture[] textureContent = new Texture[] {
+                // Просто человек.
                 new Texture('@', ConsoleColor.White, ConsoleColor.Black),
+                // Ждёт доставки.
                 new Texture('$', ConsoleColor.Yellow, ConsoleColor.Black),
+                // Пользуется.
                 new Texture('!', ConsoleColor.Green, ConsoleColor.Black)
             };
 
@@ -133,6 +158,7 @@ namespace agents
             private STATE state = STATE.not_want;
             private DateTime lastTalk = DateTime.MinValue;
             private DateTime timeOfStartDelevery;
+            private DateTime timeOfGetPackage;
 
             /// <summary>
             /// Изменение или получение состояния человека.
@@ -156,6 +182,7 @@ namespace agents
 
             public void Tick(ICollection<Person> people)
             {
+
                 switch (State)
                 {
                     case STATE.wait:
@@ -173,7 +200,7 @@ namespace agents
             /// </summary>
             private void Use()
             {
-                if ((DateTime)game.timeInGame - lastTalk > (TimeSpan)game.shelfLife)
+                if ((DateTime)game.timeInGame - timeOfGetPackage > (TimeSpan)game.shelfLife)
                     State = STATE.not_want;
             }
 
@@ -183,7 +210,10 @@ namespace agents
             private void GetPackage()
             {
                 if ((DateTime)game.timeInGame - timeOfStartDelevery > (TimeSpan)game.deleveryTime)
+                {
+                    timeOfGetPackage = game.timeInGame.Value;
                     State = STATE.use;
+                }
             }
 
             /// <summary>
@@ -198,7 +228,7 @@ namespace agents
                 if ((DateTime)game.timeInGame - lastTalk < (TimeSpan)game.talkSpan)
                     // Слишком часто разговаривать нельзя.
                     return;
-                lastTalk = DateTime.Now;
+                lastTalk = (DateTime)game.timeInGame;
                 int count = 0; // Количество разговоров.
                 foreach (Person person in people)
                 {
@@ -245,6 +275,47 @@ namespace agents
                     State = STATE.wait;
                 else if (from.State == STATE.use && ran.NextDouble() <= (0.2f + (float)game.adsForce) / 2.0f)
                     State = STATE.wait;
+            }
+        }
+
+        class VisualTable : GameObject
+        {
+            public ConsoleColor ColorForeground
+            {
+                get
+                {
+                    return texture.Pixel[0, 0].ForegroundColor;
+                }
+                set
+                {
+                    for (int x = 0; x < texture.Pixel.GetLength(0); x++)
+                        for (int y = 0; y < texture.Pixel.GetLength(1); y++)
+                        {
+                            texture.Pixel[x, y].ForegroundColor = value;
+                        }
+                }
+            }
+            private ConsoleColor ColorBackground
+            {
+                get
+                {
+                    return texture.Pixel[0, 0].BackgroundColor;
+                }
+                set
+                {
+                    for (int x = 0; x < texture.Pixel.GetLength(0); x++)
+                        for (int y = 0; y < texture.Pixel.GetLength(1); y++)
+                        {
+                            texture.Pixel[x, y].BackgroundColor = value;
+                        }
+                }
+            }
+
+            public VisualTable(int x, int y, ConsoleColor ColorForeground = ConsoleColor.Gray, ConsoleColor ColorBackground = ConsoleColor.Black)
+                : base(x, y)
+            {
+                this.ColorForeground = ColorForeground;
+                this.ColorBackground = ColorBackground;
             }
         }
 
