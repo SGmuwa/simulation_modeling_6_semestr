@@ -50,7 +50,7 @@ namespace agents
             IsKeyPress += Game1_IsKeyPress;
             int w = base.GState.Size.X;
             Point p = new Point(0, 6);
-            for (int i = 0; i < (base.GState.Size.Y - 9) * base.GState.Size.X; i++)
+            for (int i = 0; i < ((base.GState.Size.Y - 9) * base.GState.Size.X) / 10; i++)
             {
                 p.X += ran.Next(1, 10);
                 if (p.X > w)
@@ -60,7 +60,7 @@ namespace agents
                 }
                 people.Add(new Person(p, this));
             }
-            table.position.Y = p.Y + 1;
+            table.position.X = w + 1;
             gameObjectLeft.texture = new Texture(" \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n",
                 ConsoleColor.White, ConsoleColor.Black);
         }
