@@ -176,7 +176,7 @@ namespace Raft
         /// Получение состояния плота в текстовом представлении.
         /// </summary>
         public override string ToString()
-            => $"People: {countPeopleOnRaft}, State: {StateStringer.GetDescription(currentState)}, Pos: {raftPosition:N2}";
+            => $"Позиция: {raftPosition:N2}, Количество: {countPeopleOnRaft},\nСостояние: {StateStringer.GetDescription(currentState)}";
 
         
     }

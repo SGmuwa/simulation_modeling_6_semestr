@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace Raft
@@ -17,13 +18,17 @@ namespace Raft
                 (str) => label1.Text = str,
                 (str) => label2.Text = str,
                 (str) => label5.Text = str,
-                (dbl) => progressBar1.Value = (int)(dbl * progressBar1.Maximum),
+                (dbl) => panelPlot.Location = new Point((int)((panelWater.Width - panelPlot.Width) * dbl), panelPlot.Location.Y),
                 () => trackBarChance.Value / (double)trackBarChance.Maximum,
                 () => 8 * trackBarSpeed.Value / (double)trackBarSpeed.Maximum,
                 () =>
                 {
-                    if(int.TryParse(textBox1.Text, out int output) && output > 0)
+                    if (int.TryParse(textBox1.Text, out int output) && output > 0)
+                    {
+                        textBox1.BackColor = SystemColors.Window;
                         return output;
+                    }
+                    textBox1.BackColor = Color.Red;
                     return 20;
                 });
         }
@@ -40,12 +45,21 @@ namespace Raft
         private void Tick_timerVisual(object sender, EventArgs e)
             => state.UpdateVisual();
 
+        /// <summary>
+        /// Вызывается, когда пользователь меняет интервал логического таймера.
+        /// </summary>
         private void TextChanged_textBoxLogicalInterval(object sender, EventArgs e)
         {
-            if (int.TryParse(textBoxLogicalInterval.Text, out int output) && output > 0)
+            if (int.TryParse(textBoxLogicalInterval.Text, out int output) && output > 24)
+            {
+                textBoxLogicalInterval.BackColor = SystemColors.Window;
                 timerLogic.Interval = output;
+            }
             else
+            {
+                textBoxLogicalInterval.BackColor = Color.Red;
                 timerLogic.Interval = 400;
+            }
         }
     }
 }
