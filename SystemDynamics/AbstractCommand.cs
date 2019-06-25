@@ -17,16 +17,25 @@ namespace SystemDynamics
         /// </summary>
         /// <param name="name">Имя команды.</param>
         /// <param name="args">Аргументы команды.</param>
-        public void Invoke(string name, string[] args)
+        /// <returns>True, если входной текст соответсвует названию команды. Иначе - false.</returns>
+        public bool Invoke(string name, string[] args)
         {
-            if (Name.Equals(name))
-                Action(args);
+            if (!Name.Equals(name))
+                return false;
+            Action(args);
+            return true;
         }
 
         /// <summary>
         /// Запуск тела команды.
         /// </summary>
         /// <param name="args">Аргументы команды.</param>
+        /// <exception cref="ArgumentNullException">args равен null.</exception>
         protected abstract void Action(string[] args);
+
+        /// <summary>
+        /// Получение информации о команде.
+        /// </summary>
+        public abstract string Info { get; }
     }
 }

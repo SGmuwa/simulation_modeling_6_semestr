@@ -6,8 +6,7 @@ namespace SystemDynamics
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-            Console.ReadLine();
+            new CommandsProvider().Start();
         }
     }
 }
