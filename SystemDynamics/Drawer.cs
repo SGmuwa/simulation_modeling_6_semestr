@@ -18,19 +18,15 @@ namespace SystemDynamics
                 return;
             IsNeedStop = false;
             Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             while(!IsNeedStop)
             {
-                stopwatch.Start();
-                state.Update(stopwatch.Elapsed);
-                if (false)
-                {
-                    Console.SetCursorPosition(0, 0);
-                    Console.WriteLine(string.Join("\n", Table));
-                    Console.WriteLine(state);
-                    Console.Write(new string(' ', 128));
-                }
+                TimeSpan span = stopwatch.Elapsed;
                 stopwatch.Restart();
+                state.Update(span);
+                Console.Title = state.ToString(false);
             }
+            stopwatch.Stop();
         }
 
         public void Stop()

@@ -14,6 +14,10 @@ namespace SystemDynamics
         /// <see cref="ИзначальнаяМасса"/>
         /// </summary>
         private double _изначальнаяМасса = 1;
+        /// <summary>
+        /// Продолжительность эксперимента.
+        /// </summary>
+        public DateTime DuringExperiment { get; private set; } = DateTime.MinValue;
         #region Параметры.
         /// <summary>
         /// Температура плавления льда в кельвинах.
@@ -65,6 +69,10 @@ namespace SystemDynamics
             get => _изначальнаяМасса;
             set => _изначальнаяМасса = value != 0 ? value : 1;
         }
+        /// <summary>
+        /// Ускорение времени.
+        /// </summary>
+        public double MultiplicationTime { get; set; } = 1.0;
         #endregion Параметры.
         #region Динамические переменные.
         /// <summary>
@@ -112,14 +120,31 @@ namespace SystemDynamics
         /// <param name="span">Промежуток времени, который прошёл с предыдущего обновления.</param>
         public void Update(TimeSpan span)
         {
+            long willSpan = (long)(span.Ticks * MultiplicationTime) + 1L;
+            if(TimeSpan.MinValue.Ticks <= willSpan && willSpan <= TimeSpan.MaxValue.Ticks)
+                span *= MultiplicationTime;
+            else
+            {
+                Console.WriteLine("Слишком большое ускорение времени. Сброшено на по-умолчанию.");
+                MultiplicationTime = 1;
+            }
             double addEnergy = span.TotalSeconds * МощностьНагревателя;
             КоличествоДжоулей += КоличествоДжоулей + addEnergy > 0 ?
                                     addEnergy
                                     : -КоличествоДжоулей;
+            long willDate = DuringExperiment.Ticks + span.Ticks;
+            if (DateTime.MinValue.Ticks <= willDate && willDate <= DateTime.MaxValue.Ticks)
+                DuringExperiment = DuringExperiment.Add(span);
+            else
+            {
+                Console.WriteLine("Дата и время превысили допустимый диапазон. Сброшено в 0.");
+                DuringExperiment = DateTime.MinValue;
+            }
         }
         #endregion Обновление системы.
-        public override string ToString()
-            => $"Температура плавления льда в кельвинах: {ТемператураПлавленияЛьда}, " +
+        public string ToString(bool IsFull = true)
+            => IsFull ?
+            $"Температура плавления льда в кельвинах: {ТемператураПлавленияЛьда}, " +
             $"Температура кипения воды в кельвинах: {ТемператураКипенияВоды}, " +
             $"Удельная теплота плавления: {УдельнаяТеплотаПлавления}, " +
             $"Удельная теплота парообразования: {УдельнаяТеплотаПарообразования}, " +
@@ -133,7 +158,12 @@ namespace SystemDynamics
             $"Масса пара: {МассаПара}, " +
             $"Количество джоулей: {КоличествоДжоулей}, " +
             $"Текущая температура в кельвинах: {ТекущаяТемпература}, " +
-            $"Текущая температура в цельсиях: {ТекущаяТемператураЦельсий}.";
+            $"Текущая температура в цельсиях: {ТекущаяТемператураЦельсий}, " +
+            $"Время: {DuringExperiment}, Температура: {ТекущаяТемператураЦельсий,7: #.0}°C."
+            : $"Время: {DuringExperiment}, Температура: {ТекущаяТемператураЦельсий, 7 : #.0}°C, лёж/жид/пар: {МассаЛьда : 0.0}/{МассаЖидкости : 0.0}/{МассаПара : 0.0}.";
+
+        public override string ToString()
+            => ToString();
     
     }
 }

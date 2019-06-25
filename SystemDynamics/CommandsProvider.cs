@@ -17,7 +17,10 @@ namespace SystemDynamics
             {
                 new commands.Edit(drawer.state),
                 new commands.Help(this),
-                new commands.Exit(this)
+                new commands.Exit(this),
+                new commands.TableAdd(drawer),
+                new commands.TableShow(drawer.Table),
+                new commands.Show(drawer.state)
             };
         }
 
@@ -29,11 +32,14 @@ namespace SystemDynamics
             {
                 string text = Console.ReadLine();
                 string[] textWithoutSpaces = GetNameAndArgs(text);
+                if (textWithoutSpaces.Length < 1)
+                    continue;
                 string[] args = new string[textWithoutSpaces.Length - 1];
                 new List<string>(textWithoutSpaces).CopyTo(1, args, 0, textWithoutSpaces.Length - 1);
                 string nameCommand = textWithoutSpaces[0];
+                bool found = false;
                 foreach(AbstractCommand command in this)
-                    command.Invoke(nameCommand, args);
+                    found |= command.Invoke(nameCommand, args);
             }
             drawer.Stop();
         }

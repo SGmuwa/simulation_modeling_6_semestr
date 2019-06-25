@@ -20,7 +20,7 @@ namespace SystemDynamics
         /// <returns>True, если входной текст соответсвует названию команды. Иначе - false.</returns>
         public bool Invoke(string name, string[] args)
         {
-            if (!Name.Equals(name))
+            if (!Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                 return false;
             Action(args);
             return true;
@@ -37,5 +37,15 @@ namespace SystemDynamics
         /// Получение информации о команде.
         /// </summary>
         public abstract string Info { get; }
+
+        public override bool Equals(object obj)
+        {
+            return Name.ToLower().Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.ToLower().GetHashCode();
+        }
     }
 }

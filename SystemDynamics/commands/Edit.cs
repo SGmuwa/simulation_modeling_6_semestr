@@ -19,7 +19,8 @@ namespace SystemDynamics.commands
             { "ТеплоёмкостьПара".ToLower(), new GetSet<double>((state, v) => state.ТеплоёмкостьПара = v, (state) => state.ТеплоёмкостьПара) },
             { "МощностьНагревателя".ToLower(), new GetSet<double>((state, v) => state.МощностьНагревателя = v, (state) => state.МощностьНагревателя) },
             { "КоличествоДжоулей".ToLower(), new GetSet<double>((state, v) => state.КоличествоДжоулей = v, (state) => state.КоличествоДжоулей) },
-            { "ИзначальнаяМасса".ToLower(), new GetSet<double>((state, v) => state.ИзначальнаяМасса = v, (state) => state.ИзначальнаяМасса) }
+            { "ИзначальнаяМасса".ToLower(), new GetSet<double>((state, v) => state.ИзначальнаяМасса = v, (state) => state.ИзначальнаяМасса) },
+            { "МножительВремени".ToLower(), new GetSet<double>((state, v) => state.MultiplicationTime = v, (state) => state.MultiplicationTime) }
         };
 
         private readonly WaterIceSteamState State;
@@ -28,7 +29,7 @@ namespace SystemDynamics.commands
         {
             if (args.LongLength < 2)
             {
-                Console.WriteLine("Слишком мало аргументов. Используйте /help.");
+                Console.WriteLine("Слишком мало аргументов. Используйте help.");
                 return;
             }
             if (args[0] == null || args[1] == null)
