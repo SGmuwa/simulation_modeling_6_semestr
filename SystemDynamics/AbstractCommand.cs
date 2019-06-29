@@ -47,5 +47,8 @@ namespace SystemDynamics
         {
             return Name.ToLower().GetHashCode();
         }
+
+        public override string ToString()
+            => Name;
     }
 }
