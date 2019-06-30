@@ -35,7 +35,7 @@ namespace SystemDynamics
             while (!IsNeedStop)
             {
                 history.Add(GetterText());
-                InvokeText(history.Last);
+                InvokeText(history.Last.Value);
             }
             drawer.Stop();
         }
@@ -57,7 +57,7 @@ namespace SystemDynamics
                 else if (ConsoleKey.Enter == info.Key)
                     break;
                 else if (info.Key == ConsoleKey.UpArrow || info.Key == ConsoleKey.DownArrow || info.Key == ConsoleKey.LeftArrow || info.Key == ConsoleKey.RightArrow)
-                    history.Move(info, sb);
+                    sb = new StringBuilder(history.Move(info).Value);
                 else
                     sb.Append(info.KeyChar);
                 buffer = ShowUserCommandText(sb, posStart, buffer);
