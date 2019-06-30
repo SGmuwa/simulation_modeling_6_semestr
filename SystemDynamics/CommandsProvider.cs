@@ -8,6 +8,8 @@ namespace SystemDynamics
     class CommandsProvider : IEnumerable<AbstractCommand>
     {
         private readonly Drawer drawer;
+        private readonly History<string> history
+            = new History<string>();
 
         public CommandsProvider(Drawer drawer = null)
         {
@@ -22,7 +24,7 @@ namespace SystemDynamics
                 new commands.TableAdd(drawer),
                 new commands.TableShow(drawer.Table),
                 new commands.Show(drawer.state),
-                new commands.UpdateInterval(drawer)
+                new commands.IntervalUpdate(drawer)
             };
         }
 
@@ -32,7 +34,8 @@ namespace SystemDynamics
             System.Threading.Tasks.Task.Run((Action)drawer.Run);
             while (!IsNeedStop)
             {
-                InvokeText(GetterText());
+                history.Add(GetterText());
+                InvokeText(history.Last);
             }
             drawer.Stop();
         }
@@ -54,14 +57,14 @@ namespace SystemDynamics
                 else if (ConsoleKey.Enter == info.Key)
                     break;
                 else if (info.Key == ConsoleKey.UpArrow || info.Key == ConsoleKey.DownArrow || info.Key == ConsoleKey.LeftArrow || info.Key == ConsoleKey.RightArrow)
-                    ; // not support
+                    history.Move(info, sb);
                 else
                     sb.Append(info.KeyChar);
                 buffer = ShowUserCommandText(sb, posStart, buffer);
             } while (info.Key != ConsoleKey.Enter);
             if (GetCommandAndArgsFromText(sb.ToString(), out string commandName, out string[] args))
             {
-                List<AbstractCommand> recommendCommands = SearchCommands(commandName);
+                List<AbstractCommand> recommendCommands = SearchRecommendations.Search(commandName, (t) => t.Name, commands);
                 if (recommendCommands.Count == 1)
                     return recommendCommands[0].Name + " " + string.Join(" ", args);
             }
@@ -71,7 +74,8 @@ namespace SystemDynamics
         private StringBuilder ShowUserCommandText(StringBuilder sb, dynamic posStart, StringBuilder stringOld)
         {
             string sbString = sb.ToString();
-            StringBuilder output = new StringBuilder(sbString);
+            StringBuilder output = new StringBuilder("> ");
+            output.Append(sbString);
             output.AppendLine();
             if (GetCommandAndArgsFromText(sbString, out string commandName, out string[] args))
             {
@@ -96,7 +100,7 @@ namespace SystemDynamics
         {
             if (GetCommandAndArgsFromText(v, out string nameCommand, out string[] args))
             {
-                List<AbstractCommand> commands = SearchCommands(v);
+                List<AbstractCommand> commands = SearchRecommendations.Search(nameCommand, (t) => t.Name, this.commands);
                 if (commands.Count == 0)
                     return "not found.";
                 else if (commands.Count == 1)
@@ -106,93 +110,7 @@ namespace SystemDynamics
             }
             else return "(?)";
         }
-
-        private List<AbstractCommand> SearchCommands(string v)
-        {
-            Dictionary<AbstractCommand, int> pairs = new Dictionary<AbstractCommand, int>(commands.Count);
-            foreach(AbstractCommand command in commands)
-            {
-                pairs[command] = GetDistance(command.Name, v);
-            }
-            int minDistance = Minimum(pairs.Values);
-            List<AbstractCommand> output = new List<AbstractCommand>();
-            foreach(KeyValuePair<AbstractCommand, int> pair in pairs)
-            {
-                if (pair.Value <= minDistance)
-                    output.Add(pair.Key);
-            }
-            return output;
-        }
-
-        private int GetDistance(string ConstantText, string UserText)
-        {
-            if (ConstantText.Equals(UserText, StringComparison.InvariantCultureIgnoreCase))
-                return 0;
-            if (ConstantText.Contains(UserText, StringComparison.InvariantCultureIgnoreCase))
-                return 1;
-            else
-                return GetLevenshteinDistance(ConstantText.ToLower(), UserText.ToLower()) + 2;
-        }
-
-        int depth = 0;
-
-        private int GetLevenshteinDistance(string first, string second)
-        {
-            if (++depth > 500)
-            {
-                depth--;
-                return int.MaxValue / 2;
-            }
-
-            int cost;
-
-            /* base case: empty strings */
-            if (first.Length == 0) return second.Length;
-            if (second.Length == 0) return first.Length;
-
-            /* test if last characters of the strings match */
-            if (first[first.Length - 1] == second[second.Length - 1])
-                cost = 0;
-            else
-                cost = 1;
-
-            /* return minimum of delete char from s, delete char from t, and delete char from both */
-            int output = Minimum(GetDistance(first.Substring(0, first.Length - 1), second) + 1,
-                           GetDistance(first, second.Substring(0, second.Length - 1)) + 1,
-                           GetDistance(first.Substring(0, first.Length - 1), second.Substring(0, second.Length - 1)) + cost);
-            depth--;
-            return output;
-        }
-
-        private int Minimum(IEnumerable<int> values)
-        {
-            int min = 0;
-            bool first = true;
-            foreach (int v in values)
-            {
-                if(first)
-                {
-                    min = v;
-                    first = false;
-                    continue;
-                }
-                if (v < min)
-                    min = v;
-            }
-            return min;
-        }
-
-        private int Minimum(params int[] values)
-        {
-            if (values.Length <= 0)
-                throw new ArgumentException();
-            int min = values[0];
-            for (int i = 1; i < values.Length; i++)
-                if (values[i] < min)
-                    min = values[i];
-            return min;
-        }
-
+        
         /// <summary>
         /// Преобразовывает входной текст в команду и вызывает этку команду.
         /// </summary>

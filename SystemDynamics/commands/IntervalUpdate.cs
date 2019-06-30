@@ -2,22 +2,22 @@
 
 namespace SystemDynamics.commands
 {
-    internal class UpdateInterval : AbstractCommand
+    internal class IntervalUpdate : AbstractCommand
     {
         private readonly Drawer drawer;
 
-        public UpdateInterval(Drawer drawer) : base(nameof(UpdateInterval)) => this.drawer = drawer;
+        public IntervalUpdate(Drawer drawer) : base(nameof(IntervalUpdate)) => this.drawer = drawer;
 
         public override string Info
-            => $"Использование: {nameof(UpdateInterval)} <интервал>.\n" +
+            => $"Использование: {nameof(IntervalUpdate)} <интервал>.\n" +
             $"Задаёт миллисекунды, с какой переодичностью обновлять систему. " +
             $"Диапазон значений: от 0 до 1000. Допустимы только целые числа.";
 
         protected override void Action(string[] args)
         {
             if (args.Length < 1)
-                Console.WriteLine("Недостаточно количество аргументов. Используйте один аргумент. Получено: " + args.Length);
-            else if (ushort.TryParse(Console.ReadLine(), out ushort result))
+                Console.WriteLine($"{nameof(IntervalUpdate)} = {drawer.IntervalUpdate}");
+            else if (ushort.TryParse(args[0], out ushort result))
                 if (0 <= result && result <= 1000)
                     drawer.IntervalUpdate = result;
                 else

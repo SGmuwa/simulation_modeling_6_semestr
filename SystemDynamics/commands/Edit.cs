@@ -27,25 +27,27 @@ namespace SystemDynamics.commands
 
         protected override void Action(string[] args)
         {
-            if (args.LongLength < 2)
+            if (args.LongLength < 1)
             {
                 Console.WriteLine("Слишком мало аргументов. Используйте help.");
                 return;
             }
-            if (args[0] == null || args[1] == null)
+            if (args[0] == null)
             {
                 Console.WriteLine("Аргументы переданы с указателем null.");
                 throw new ArgumentNullException();
             }
             Result<GetSet<double>> property = SearchProperty(args[0]);
-            if(!property.Ok)
+            if (!property.Ok)
                 Console.WriteLine(property.Problem);
-            else if(double.TryParse(args[1], out double value))
+            else if (args.Length == 1)
+                Console.WriteLine($"{args[0]} = {property.Value}");
+            else if (double.TryParse(args[1], out double value))
                 try
                 {
                     property.Value.Set(State, value);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Console.WriteLine(e);
                 }
