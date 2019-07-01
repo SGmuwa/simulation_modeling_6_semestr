@@ -30,11 +30,13 @@ namespace SystemDynamics
                 new commands.Edit<WaterIceSteamState, double>(drawer.state, "Суммарная масса вещества. Не может быть равна нулю. Можно попробовать указать отрицательную массу.", nameof(drawer.state.ИзначальнаяМасса), (state, v) => state.ИзначальнаяМасса = v, (state) => state.ИзначальнаяМасса, double.TryParse, (d) => d != 0),
                 new commands.Edit<WaterIceSteamState, double>(drawer.state, "Используется за ускорение, замедление, поворот времени.", nameof(drawer.state.MultiplicationTime), (state, v) => state.MultiplicationTime = v, (state) => state.MultiplicationTime, double.TryParse, (d) => double.IsNormal(d)),
                 new commands.Edit<Drawer, int>(drawer, "Задаёт миллисекунды, с какой переодичностью обновлять систему. Диапазон значений: от 0 до 1000. Допустимы только целые числа.", nameof(drawer.IntervalUpdate), (d, i) => d.IntervalUpdate = i, (d) => d.IntervalUpdate, int.TryParse, (d) => 0 <= d && d <= 1000),
+                new commands.Edit<Drawer, TimeSpan>(drawer, "Период добавления информации в таблицу.", nameof(drawer.TableSpan), (dr, sp) => dr.TableSpan = sp, (dr) => dr.TableSpan, TimeSpan.TryParse, (ts) => true),
 
                 new commands.Help(this),
                 new commands.Exit(this),
                 new commands.TableAdd(drawer),
                 new commands.TableShow(drawer.Table),
+                new commands.TableCls(drawer.Table),
                 new commands.Show(drawer.state)
             };
         }

@@ -26,6 +26,22 @@ namespace SystemDynamics
                     intervalUpdate = value;
             }
         }
+        /// <summary>
+        /// Сколько прошло времени с последнего добавления записи в таблицу?
+        /// </summary>
+        private TimeSpan tableLastCheck;
+        private TimeSpan tableSpan = TimeSpan.MaxValue;
+        /// <summary>
+        /// Период добавления информации в таблицу.
+        /// </summary>
+        public TimeSpan TableSpan
+        {
+            get => tableSpan;
+            set
+            {
+                tableSpan = value;
+            }
+        }
 
         public void Run()
         {
@@ -39,10 +55,24 @@ namespace SystemDynamics
                 TimeSpan span = stopwatch.Elapsed;
                 stopwatch.Restart();
                 state.Update(span);
+                TableLogic(span * state.MultiplicationTime);
                 Console.Title = state.ToString(false);
                 Thread.Sleep(IntervalUpdate);
             }
             stopwatch.Stop();
+        }
+
+        private void TableLogic(TimeSpan TickSpan)
+        {
+            if (tableSpan == TimeSpan.MaxValue)
+                return;
+            tableLastCheck += TickSpan;
+            if (tableLastCheck > TableSpan)
+            {
+                Table.Add(state.ToString(false));
+                while(tableLastCheck > TableSpan)
+                    tableLastCheck = tableLastCheck - TableSpan;
+            }
         }
 
         public void Stop()
