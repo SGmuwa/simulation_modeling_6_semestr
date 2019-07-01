@@ -4,11 +4,13 @@ namespace SystemDynamics.commands
 {
     class Help : AbstractCommand
     {
-        public Help(CommandsProvider provider) : base("help") => Provider = provider ?? throw new ArgumentNullException();
+        public Help(CommandsProvider provider)
+            : base("help") => Provider = provider ?? throw new ArgumentNullException();
 
         private readonly CommandsProvider Provider;
 
-        public override string Info => "Выводит справочную информацию для всех команд.";
+        public override string Info
+            => "Выводит справочную информацию о всех командах.";
 
         protected override void Action(string[] args)
         {
