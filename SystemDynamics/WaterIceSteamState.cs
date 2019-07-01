@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SystemDynamics
 {
-    class WaterIceSteamState
+    public class WaterIceSteamState
     {
         /// <summary>
         /// <see cref="КоличествоДжоулей"/>.

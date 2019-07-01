@@ -1,94 +1,146 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SystemDynamics.commands
 {
-    class Edit : AbstractCommand
+    class Edit<ClassType, PropertyType> : AbstractCommand where ClassType : class
     {
-        public Edit(WaterIceSteamState state) : base("edit") => State = state;
+        /// <summary>
+        /// Создание экземпляра редактирования свойства.
+        /// </summary>
+        /// <param name="state">Ссылка на объект, свойство которого надо менять.</param>
+        /// <param name="infoProperty">Справочная информация о меняемом свойстве объекта.</param>
+        /// <param name="nameProperty">Имя свойства объекта.</param>
+        /// <param name="set">Функция присваивания значения в свойство.</param>
+        /// <param name="get">Функция получения значения из свойства.</param>
+        /// <param name="tryParse">Функция преобразования текста в тип свойства.</param>
+        public Edit(ClassType state, string infoProperty, string nameProperty, Action<ClassType, PropertyType> set, Func<ClassType, PropertyType> get, TryParseType tryParse, Func<PropertyType, bool> isFine)
+            : this(state, new GetSet(nameProperty, infoProperty, set, get, tryParse, isFine)) { }
 
-        private readonly Dictionary<string, GetSet<double>> Properties = new Dictionary<string, GetSet<double>>()
+        /// <summary>
+        /// Создание экземпляра редактирования свойства.
+        /// </summary>
+        /// <param name="state">Ссылка на объект, свойство которого надо менять.</param>
+        /// <param name="property">Информация о меняемом свойстве.</param>
+        public Edit(ClassType state, GetSet property)
+            : base($"{nameof(Edit<ClassType, PropertyType>)}:{property.Name}")
         {
-            { "ТемператураПлавленияЛьда".ToLower(), new GetSet<double>((state, v) => state.ТемператураПлавленияЛьда = v, (state) => state.ТемператураПлавленияЛьда) },
-            { "ТемператураКипенияВоды".ToLower(), new GetSet<double>((state, v) => state.ТемператураКипенияВоды = v, (state) => state.ТемператураКипенияВоды) },
-            { "УдельнаяТеплотаПлавления".ToLower(), new GetSet<double>((state, v) => state.УдельнаяТеплотаПлавления = v, (state) => state.УдельнаяТеплотаПлавления) },
-            { "УдельнаяТеплотаПарообразования".ToLower(), new GetSet<double>((state, v) => state.УдельнаяТеплотаПарообразования = v, (state) => state.УдельнаяТеплотаПарообразования) },
-            { "ТеплоёмкостьЛьда".ToLower(), new GetSet<double>((state, v) => state.ТеплоёмкостьЛьда = v, (state) => state.ТеплоёмкостьЛьда) },
-            { "ТеплоёмкостьЖидкости".ToLower(), new GetSet<double>((state, v) => state.ТеплоёмкостьЖидкости = v, (state) => state.ТеплоёмкостьЖидкости) },
-            { "ТеплоёмкостьПара".ToLower(), new GetSet<double>((state, v) => state.ТеплоёмкостьПара = v, (state) => state.ТеплоёмкостьПара) },
-            { "МощностьНагревателя".ToLower(), new GetSet<double>((state, v) => state.МощностьНагревателя = v, (state) => state.МощностьНагревателя) },
-            { "КоличествоДжоулей".ToLower(), new GetSet<double>((state, v) => state.КоличествоДжоулей = v, (state) => state.КоличествоДжоулей) },
-            { "ИзначальнаяМасса".ToLower(), new GetSet<double>((state, v) => state.ИзначальнаяМасса = v, (state) => state.ИзначальнаяМасса) },
-            { "МножительВремени".ToLower(), new GetSet<double>((state, v) => state.MultiplicationTime = v, (state) => state.MultiplicationTime) }
-        };
+            State = state ?? throw new ArgumentNullException($"Поле {nameof(state)} должно быть не равно null.");
+            Property = property;
+        }
 
-        private readonly WaterIceSteamState State;
+        /// <summary>
+        /// Информация о объекте, чьё свойство меняется.
+        /// </summary>
+        private readonly ClassType State;
 
         protected override void Action(string[] args)
         {
-            if (args.LongLength < 1)
-            {
-                Console.WriteLine("Слишком мало аргументов. Используйте help.");
-                return;
-            }
-            if (args[0] == null)
+            if (args == null)
             {
                 Console.WriteLine("Аргументы переданы с указателем null.");
                 throw new ArgumentNullException();
             }
-            Result<GetSet<double>> property = SearchProperty(args[0]);
-            if (!property.Ok)
-                Console.WriteLine(property.Problem);
-            else if (args.Length == 1)
-                Console.WriteLine($"{args[0]} = {property.Value}");
-            else if (double.TryParse(args[1], out double value))
+            if (args.Length == 0)
                 try
                 {
-                    property.Value.Set(State, value);
+                    Console.WriteLine($"{Property.Name} = {Property.Get(State)}");
+                }
+                catch
+                {
+                    Console.WriteLine("Не удалось получить значение свойства.");
+                }
+            else if (Property.TryParse(args[0], out PropertyType value))
+                try
+                {
+                    if (Property.IsFine(value))
+                        Property.Set(State, value);
+                    else
+                        Console.WriteLine("Не удалось изменить значение свойства.");
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                 }
             else
-                Console.WriteLine("Вторым аргументом ожидалась цифра double. Например: " + Math.PI);
+                Console.WriteLine($"Не удалось преобразовать входной текст в тип {typeof(PropertyType).Name}.");
         }
 
         /// <summary>
-        /// Ищет значение определения по части ключа среди ключей в <see cref="Properties"/>.
+        /// Информация о свойстве.
         /// </summary>
-        /// <param name="str">Часть ключа.</param>
-        /// <returns>В случае удачи - параметры изменения.</returns>
-        private Result<GetSet<double>> SearchProperty(string str)
-        {
-            str = str.ToLower();
-            foreach(string key in Properties.Keys)
-            {
-                if(key.StartsWith(str))
-                {
-                    return new Result<GetSet<double>>(Properties[key]);
-                }
-            }
-            return new Result<GetSet<double>>(new KeyNotFoundException("Не удалось найти ключ, который начинается на: " + str));
-        }
+        private readonly GetSet Property;
 
+        /// <summary>
+        /// Справочная информация.
+        /// </summary>
         public override string Info
-            => $"Изменяет параметры системы. " +
-            $"Использование: \"{Name} <имя_параметра> <значение>. " +
-            $"Имя параметра можно задать первыми уникальными символами. " +
-            $"Доступные для изменения:\n{string.Join("\n", Properties.Keys)}";
+            => $"Изменяет параметр \"{Property.Name}\" системы. " +
+            $"Использование: {Name} <значение>.\n" +
+            $"Справка: {Property.Info}";
 
-        private struct GetSet<T>
+        /// <summary>
+        /// Класс представляет собой прототип функции TryParse всех типов без форматирования.
+        /// </summary>
+        /// <param name="input">Входной текст, который надо преобразовать в тип <typeparamref name="PropertyType"/>.</param>
+        /// <param name="result">Преобразованные данные из текста.</param>
+        /// <returns>True, если преобразование было успешно. Иначе - false.</returns>
+        public delegate bool TryParseType(string input, out PropertyType result);
+
+        public struct GetSet
         {
-            public GetSet(Action<WaterIceSteamState, T> set, Func<WaterIceSteamState, T> get)
+            /// <summary>
+            /// Создание информации о свойстве.
+            /// </summary>
+            /// <param name="set">Функция присваивания свойства.</param>
+            /// <param name="get">Функция получения из свойства значения.</param>
+            /// <param name="tryParse">Функция преобразования текста в тип данных свойства.</param>
+            /// <param name="isFine">True, если можно задать этому свойству значение. Иначе - False.</param>
+            public GetSet(Action<ClassType, PropertyType> set, Func<ClassType, PropertyType> get, TryParseType tryParse, Func<PropertyType, bool> isFine)
+                : this("", "", set, get, tryParse, isFine) { }
+
+            /// <summary>
+            /// Создание информации о свойстве.
+            /// </summary>
+            /// <param name="name">Имя свойства.</param>
+            /// <param name="info">Справочная информация о свойстве.</param>
+            /// <param name="set">Функция присваивания свойства.</param>
+            /// <param name="get">Функция получения из свойства значения.</param>
+            /// <param name="tryParse">Функция преобразования текста в тип данных свойства.</param>
+            /// <param name="isFine">True, если можно задать этому свойству значение. Иначе - False.</param>
+            public GetSet(string name, string info, Action<ClassType, PropertyType> set, Func<ClassType, PropertyType> get, TryParseType tryParse, Func<PropertyType, bool> isFine)
             {
+                Name = name;
+                Info = info;
                 Set = set;
                 Get = get;
+                TryParse = tryParse;
+                IsFine = isFine;
             }
 
-            public Action<WaterIceSteamState, T> Set;
-            public Func<WaterIceSteamState, T> Get;
+            /// <summary>
+            /// Имя свойства.
+            /// </summary>
+            public string Name;
+            /// <summary>
+            /// Справочная информация о свойстве.
+            /// </summary>
+            public string Info;
+            /// <summary>
+            /// Функция присваивания свойства.
+            /// </summary>
+            public Action<ClassType, PropertyType> Set;
+            /// <summary>
+            /// Функция получения из свойства значения.
+            /// </summary>
+            public Func<ClassType, PropertyType> Get;
+            /// <summary>
+            /// Функция преобразования текста в тип данных свойства.
+            /// </summary>
+            public TryParseType TryParse;
+            /// <summary>
+            /// True, если можно задать этому свойству значение. Иначе - False.
+            /// </summary>
+            public Func<PropertyType, bool> IsFine;
         }
     }
 }

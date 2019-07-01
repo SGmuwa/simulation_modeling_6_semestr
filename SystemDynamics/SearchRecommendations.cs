@@ -90,7 +90,7 @@ namespace SystemDynamics
         /// <summary>
         /// Максимальная глубина поиска.
         /// </summary>
-        private const int MAX_DEPTH = 1000;
+        private const int MAX_DEPTH = 6;
 
         private static int GetLevenshteinDistance(string first, string second)
         {

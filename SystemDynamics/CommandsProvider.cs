@@ -18,13 +18,24 @@ namespace SystemDynamics
             this.drawer = drawer;
             commands = new HashSet<AbstractCommand>()
             {
-                new commands.Edit(drawer.state),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за температуру плавления льда.", nameof(drawer.state.ТемператураПлавленияЛьда), (state, v) => state.ТемператураПлавленияЛьда = v, (state) => state.ТемператураПлавленияЛьда, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за температуру кипения воды.", nameof(drawer.state.ТемператураКипенияВоды), (state, v) => state.ТемператураКипенияВоды = v, (state) => state.ТемператураКипенияВоды, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за удельную теплоту плавления.", nameof(drawer.state.УдельнаяТеплотаПлавления), (state, v) => state.УдельнаяТеплотаПлавления = v, (state) => state.УдельнаяТеплотаПлавления, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за удельную теплоту парообразования.", nameof(drawer.state.УдельнаяТеплотаПарообразования), (state, v) => state.УдельнаяТеплотаПарообразования = v, (state) => state.УдельнаяТеплотаПарообразования, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за теплоёмкость льда.", nameof(drawer.state.ТеплоёмкостьЛьда), (state, v) => state.ТеплоёмкостьЛьда = v, (state) => state.ТеплоёмкостьЛьда, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за теплоёмкость жидкости.", nameof(drawer.state.ТеплоёмкостьЖидкости), (state, v) => state.ТеплоёмкостьЖидкости = v, (state) => state.ТеплоёмкостьЖидкости, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за теплоёмкость пара.", nameof(drawer.state.ТеплоёмкостьПара), (state, v) => state.ТеплоёмкостьПара = v, (state) => state.ТеплоёмкостьПара, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за мощноть нагревателя.", nameof(drawer.state.МощностьНагревателя), (state, v) => state.МощностьНагревателя = v, (state) => state.МощностьНагревателя, double.TryParse, (d) => true),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Отвечает за текущее количество джоулей в системе. Может быть только неотрицательное число.", nameof(drawer.state.КоличествоДжоулей), (state, v) => state.КоличествоДжоулей = v, (state) => state.КоличествоДжоулей, double.TryParse, (d) => d >= 0),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Суммарная масса вещества. Не может быть равна нулю. Можно попробовать указать отрицательную массу.", nameof(drawer.state.ИзначальнаяМасса), (state, v) => state.ИзначальнаяМасса = v, (state) => state.ИзначальнаяМасса, double.TryParse, (d) => d != 0),
+                new commands.Edit<WaterIceSteamState, double>(drawer.state, "Используется за ускорение, замедление, поворот времени.", nameof(drawer.state.MultiplicationTime), (state, v) => state.MultiplicationTime = v, (state) => state.MultiplicationTime, double.TryParse, (d) => double.IsNormal(d)),
+                new commands.Edit<Drawer, int>(drawer, "Задаёт миллисекунды, с какой переодичностью обновлять систему. Диапазон значений: от 0 до 1000. Допустимы только целые числа.", nameof(drawer.IntervalUpdate), (d, i) => d.IntervalUpdate = i, (d) => d.IntervalUpdate, int.TryParse, (d) => 0 <= d && d <= 1000),
+
                 new commands.Help(this),
                 new commands.Exit(this),
                 new commands.TableAdd(drawer),
                 new commands.TableShow(drawer.Table),
-                new commands.Show(drawer.state),
-                new commands.IntervalUpdate(drawer)
+                new commands.Show(drawer.state)
             };
         }
 
