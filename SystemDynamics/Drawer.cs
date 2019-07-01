@@ -67,11 +67,10 @@ namespace SystemDynamics
             if (tableSpan == TimeSpan.MaxValue)
                 return;
             tableLastCheck += TickSpan;
-            if (tableLastCheck > TableSpan)
+            if (Math.Abs(tableLastCheck.Ticks) > Math.Abs(TableSpan.Ticks))
             {
                 Table.Add(state.ToString(false));
-                while(tableLastCheck > TableSpan)
-                    tableLastCheck = tableLastCheck - TableSpan;
+                tableLastCheck = TimeSpan.Zero;
             }
         }
 
